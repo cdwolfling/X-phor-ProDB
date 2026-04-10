@@ -1,0 +1,210 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <Name>ProDB</Name>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectVersion>4.1</ProjectVersion>
+    <ProjectGuid>{8b42934f-a7c0-4a2a-a70a-8d26fde7b47c}</ProjectGuid>
+    <DSP>Microsoft.Data.Tools.Schema.Sql.Sql160DatabaseSchemaProvider</DSP>
+    <OutputType>Database</OutputType>
+    <RootPath>
+    </RootPath>
+    <RootNamespace>ProDB</RootNamespace>
+    <AssemblyName>ProDB</AssemblyName>
+    <ModelCollation>2052,CI</ModelCollation>
+    <DefaultFileStructure>BySchemaAndSchemaType</DefaultFileStructure>
+    <DeployToDatabase>True</DeployToDatabase>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <TargetLanguage>CS</TargetLanguage>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <SqlServerVerification>False</SqlServerVerification>
+    <IncludeCompositeObjects>True</IncludeCompositeObjects>
+    <TargetDatabaseSet>True</TargetDatabaseSet>
+    <DefaultCollation>Chinese_PRC_CI_AS</DefaultCollation>
+    <DefaultFilegroup>PRIMARY</DefaultFilegroup>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <OutputPath>bin\Release\</OutputPath>
+    <BuildScriptName>$(MSBuildProjectName).sql</BuildScriptName>
+    <TreatWarningsAsErrors>False</TreatWarningsAsErrors>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <DefineDebug>false</DefineDebug>
+    <DefineTrace>true</DefineTrace>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <OutputPath>bin\Debug\</OutputPath>
+    <BuildScriptName>$(MSBuildProjectName).sql</BuildScriptName>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <DefineDebug>true</DefineDebug>
+    <DefineTrace>true</DefineTrace>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup>
+    <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">11.0</VisualStudioVersion>
+    <!-- Default to the v11.0 targets path if the targets file for the current VS version is not found -->
+    <SSDTExists Condition="Exists('$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\SSDT\Microsoft.Data.Tools.Schema.SqlTasks.targets')">True</SSDTExists>
+    <VisualStudioVersion Condition="'$(SSDTExists)' == ''">11.0</VisualStudioVersion>
+  </PropertyGroup>
+  <Import Condition="'$(SQLDBExtensionsRefPath)' != ''" Project="$(SQLDBExtensionsRefPath)\Microsoft.Data.Tools.Schema.SqlTasks.targets" />
+  <Import Condition="'$(SQLDBExtensionsRefPath)' == ''" Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\SSDT\Microsoft.Data.Tools.Schema.SqlTasks.targets" />
+  <ItemGroup>
+    <Folder Include="Properties" />
+    <Folder Include="dbo\" />
+    <Folder Include="dbo\Tables\" />
+    <Folder Include="Administration\" />
+    <Folder Include="Administration\Tables\" />
+    <Folder Include="dbo\Views\" />
+    <Folder Include="Security\" />
+    <Folder Include="dbo\Functions\" />
+    <Folder Include="dbo\Stored Procedures\" />
+    <Folder Include="Database Triggers\" />
+    <Folder Include="spec\" />
+    <Folder Include="spec\Tables\" />
+    <Folder Include="spec\Views\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Build Include="dbo\Tables\Shipping_list.sql" />
+    <Build Include="dbo\Tables\Custom_Information.sql" />
+    <Build Include="dbo\Tables\Die_list.sql" />
+    <Build Include="dbo\Tables\Test_information.sql" />
+    <Build Include="Administration\Tables\DDL_Log.sql" />
+    <Build Include="dbo\Tables\Die_ID.sql" />
+    <Build Include="dbo\Tables\Electrical.sql" />
+    <Build Include="dbo\Tables\Optical.sql" />
+    <Build Include="dbo\Tables\Reference1.sql" />
+    <Build Include="dbo\Tables\Z_Shipping_list.sql" />
+    <Build Include="dbo\Tables\AppCatalog.sql" />
+    <Build Include="dbo\Tables\AppLoginLog.sql" />
+    <Build Include="dbo\Views\v_HS01LABEL.sql" />
+    <Build Include="dbo\Views\v_SZ02NT02.sql" />
+    <Build Include="dbo\Views\v_SZ07LABEL.sql" />
+    <Build Include="dbo\Views\view_3.sql" />
+    <Build Include="dbo\Views\XH_BOXLABEL.sql" />
+    <Build Include="dbo\Views\XH_INNERCARTON.sql" />
+    <Build Include="dbo\Views\XH_OUTTERCARTON.sql" />
+    <Build Include="dbo\Views\v_WH03_BOXLABEL.sql" />
+    <Build Include="dbo\Views\WH03_INNERCARTON.sql" />
+    <Build Include="dbo\Views\WH03_OUTTERCARTON.sql" />
+    <Build Include="dbo\Views\v_HS01LABEL_INNERCARTON.sql" />
+    <Build Include="dbo\Views\v_HS01LABEL_OUTTERCARTON.sql" />
+    <Build Include="dbo\Views\v_SZ07LABEL_INNERCARTON.sql" />
+    <Build Include="dbo\Views\v_SZ07LABEL_OUTTERCARTON.sql" />
+    <Build Include="dbo\Views\v_SZ02NT02_INNERCARTON.sql" />
+    <Build Include="dbo\Views\v_SZ02NT02_OUTTERCARTON.sql" />
+    <Build Include="dbo\Views\V_XH_BOXLABEL.sql" />
+    <Build Include="dbo\Views\V_XH_INNERCARTON.sql" />
+    <Build Include="dbo\Views\V_XH_OUTTERCARTON.sql" />
+    <Build Include="Security\Production.sql" />
+    <Build Include="dbo\Functions\ufnGetListFromSourceString.sql" />
+    <Build Include="dbo\Stored Procedures\uspUpdate_ShippingList.sql" />
+    <Build Include="dbo\Stored Procedures\uspQueryShippingListDiff.sql" />
+    <Build Include="Database Triggers\Trig_Log_DDL_DATABASE_LEVEL_EVENTS.sql" />
+    <Build Include="Security\Administration.sql" />
+    <Build Include="Security\Production1.sql" />
+    <Build Include="Security\Permissions.sql" />
+    <Build Include="dbo\Tables\Shipping_list_History.sql" />
+    <Build Include="dbo\Tables\Shipping_list_staging.sql" />
+    <Build Include="dbo\Views\vw_Shipping_list_All.sql" />
+    <Build Include="dbo\Tables\Custom_Information_History.sql" />
+    <Build Include="dbo\Tables\Wafer.sql" />
+    <Build Include="dbo\Tables\Die.sql" />
+    <Build Include="dbo\Tables\Z_Wafer.sql" />
+    <Build Include="dbo\Stored Procedures\uspUpdate_Wafer_Batch.sql" />
+    <Build Include="dbo\Tables\Die_AOIPicked.sql" />
+    <Build Include="dbo\Stored Procedures\uspSave_Die_AOIPicked.sql" />
+    <Build Include="dbo\Stored Procedures\uspGetWIPWafer.sql" />
+    <Build Include="dbo\Tables\ProductModel.sql" />
+    <Build Include="dbo\Functions\ufnGetBoxPosition.sql" />
+    <Build Include="dbo\Stored Procedures\usp_InsertDieFromBinmap.sql" />
+    <Build Include="dbo\Stored Procedures\usp_AssignWafer.sql" />
+    <Build Include="dbo\Stored Procedures\uspGetWIPWafer_RPAtest.sql" />
+    <Build Include="dbo\Tables\Traveler_修正目检产出.sql" />
+    <Build Include="dbo\Tables\Die_History.sql" />
+    <Build Include="dbo\Views\vw_Die_AOIPicked.sql" />
+    <Build Include="dbo\Functions\ufn_YearWeekCode.sql" />
+    <Build Include="dbo\Stored Procedures\usp_SyncWaferFromTraveler.sql" />
+    <Build Include="dbo\Stored Procedures\usp_Import_AOI_Defect.sql" />
+    <Build Include="dbo\Tables\Wafer_AOI_Process.sql" />
+    <Build Include="dbo\Tables\AOI_Json_ST_Data.sql" />
+    <Build Include="dbo\Tables\AOI_Json_ST.sql" />
+    <Build Include="dbo\Tables\AOI_Json_RI_Data.sql" />
+    <Build Include="dbo\Tables\AOI_Json_RI.sql" />
+    <Build Include="dbo\Stored Procedures\uspUpsertWaferAOIProcess.sql" />
+    <Build Include="dbo\Stored Procedures\uspGetPendingAOIStepWafers.sql" />
+    <Build Include="dbo\Tables\AOI_Json_Rework_Data.sql" />
+    <Build Include="dbo\Tables\AOI_Json_Rework.sql" />
+    <Build Include="dbo\Views\vw_AOI_Json_ST.sql" />
+    <Build Include="dbo\Views\vw_AOI_Json_RI.sql" />
+    <Build Include="dbo\Views\vw_AOI_Json_Rework.sql" />
+    <Build Include="dbo\Tables\TrayMapHeader.sql" />
+    <Build Include="dbo\Tables\TrayMapCell.sql" />
+    <Build Include="dbo\Tables\SY_Chip_Shipment_Statistics.sql" />
+    <Build Include="dbo\Stored Procedures\uspSaveTrayMap.sql" />
+    <Build Include="dbo\Tables\CPTest_Value.sql" />
+    <Build Include="dbo\Tables\CPTest_ParamDef.sql" />
+    <Build Include="dbo\Tables\CPTest_File.sql" />
+    <Build Include="dbo\Tables\CPTest_Chip.sql" />
+    <Build Include="dbo\Stored Procedures\uspGetWaferList_ToHandlingCPData.sql" />
+    <Build Include="dbo\Views\vw_CPTestData.sql" />
+    <Build Include="dbo\Stored Procedures\uspGenerateFileID_ToHandlingCPData.sql" />
+    <Build Include="dbo\Functions\ufnGetStation_FromCPTestFilePath.sql" />
+    <Build Include="dbo\Tables\Customer_ShippingData.sql" />
+    <Build Include="dbo\Stored Procedures\uspGenerateShippingData_ToDoList.sql" />
+    <Build Include="dbo\Stored Procedures\uspGenerateShippingData.sql" />
+    <Build Include="dbo\Stored Procedures\uspGenerateShippingData_SaveResult.sql" />
+    <Build Include="dbo\Tables\Die_WrongBin7.sql" />
+    <Build Include="dbo\Stored Procedures\usp_GenerateTrayMap_ForWrongBin7.sql" />
+    <Build Include="dbo\Tables\Z_Die_6bit.sql" />
+    <Build Include="dbo\Stored Procedures\usp_AssignWafer_ForWrongBin7.sql" />
+    <Build Include="dbo\Functions\ufnFormatBinmap_ForWrongBin7.sql" />
+    <Build Include="dbo\Stored Procedures\uspSaveTrayMap_SY.sql" />
+    <Build Include="dbo\Stored Procedures\uspGetPendingImportSYTraySN.sql" />
+    <Build Include="dbo\Tables\Z_Die_Bin7Case_Coral6p0_33Wafer_BinmapV3.sql" />
+    <Build Include="dbo\Tables\Z_Die_Bin7Case_Coral6p0_33Wafer_BinmapV2.sql" />
+    <Build Include="dbo\Tables\Tray_Track_Log.sql" />
+    <Build Include="dbo\Tables\TravelerFilePriorityQueue.sql" />
+    <Build Include="dbo\Stored Procedures\uspSaveTray_Track_Log.sql" />
+    <Build Include="dbo\Stored Procedures\uspProcessTravelerOfPriorityQueue.sql" />
+    <Build Include="dbo\Stored Procedures\uspReport_WaferYield.sql" />
+    <Build Include="dbo\Tables\CPStations_Product.sql" />
+    <Build Include="dbo\Tables\CPStations.sql" />
+    <Build Include="dbo\Stored Procedures\uspSave_Die_AOIPicked_WithDefect.sql" />
+    <Build Include="dbo\Views\vw_Wafer_INDefect_Summary.sql" />
+    <Build Include="dbo\Views\vw_CPTestData_59Param.sql" />
+    <Build Include="dbo\Stored Procedures\uspReport_TestDataForShipping_20260309.sql" />
+    <Build Include="dbo\Stored Procedures\uspReport_TestDataForShipping_20260214.sql" />
+    <Build Include="dbo\Stored Procedures\uspReport_ShippingMap.sql" />
+    <Build Include="dbo\Views\vw_CPTestData_Coral4p5.sql" />
+    <Build Include="dbo\Stored Procedures\uspReport_Coral4p5_TestData.sql" />
+    <Build Include="dbo\Views\vw_TrayMap.sql" />
+    <Build Include="dbo\Views\vw_CPTestData_Coral6p0.sql" />
+    <Build Include="dbo\Stored Procedures\usp_GenerateTrayMap_ForWrongBin78.sql" />
+    <Build Include="dbo\Tables\LotWafer_UEC_Mean_Std.sql" />
+    <Build Include="dbo\Tables\LotWafer_UEC_Data.sql" />
+    <Build Include="dbo\Functions\ufn_GetChipBin_FromCPData.sql" />
+    <Build Include="dbo\Tables\Z_Die_Bin7Case_Coral6p0_33Wafer_BinmapV1.sql" />
+    <Build Include="dbo\Tables\TestTime_Record.sql" />
+    <Build Include="dbo\Tables\Die_WrongBin7_82Wafer.sql" />
+    <Build Include="spec\Tables\ProductFamilySpecDetail.sql" />
+    <Build Include="spec\Tables\ProductFamilySpec.sql" />
+    <Build Include="spec\Tables\ParameterDef.sql" />
+    <Build Include="spec\Views\vw_ProductFamilySpec.sql" />
+    <Build Include="dbo\Functions\ufn_GetUEC_Mean_Std.sql" />
+    <Build Include="dbo\Stored Procedures\uspReport_InsertionLossCheck_For_Shipping.sql" />
+    <Build Include="dbo\Stored Procedures\uspReport_BinmapCheck_For_Shipping.sql" />
+    <Build Include="dbo\Stored Procedures\usp_Insert_TestTime_Record.sql" />
+    <Build Include="Security\spec.sql" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Project2DEV.scmp" />
+  </ItemGroup>
+</Project>
