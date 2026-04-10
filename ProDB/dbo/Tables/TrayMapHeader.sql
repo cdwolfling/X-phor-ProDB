@@ -1,7 +1,7 @@
 ﻿CREATE TABLE [dbo].[TrayMapHeader] (
     [TrayMapId]       BIGINT       IDENTITY (1, 1) NOT NULL,
     [LotWaferTrayKey] VARCHAR (30) NOT NULL,
-    [ProductModel]    VARCHAR (8)  NOT NULL,
+    [ProductModel]    VARCHAR (20) NOT NULL,
     [LotNo]           VARCHAR (7)  NOT NULL,
     [Wafer]           VARCHAR (3)  NOT NULL,
     [LotWafer]        VARCHAR (11) NOT NULL,
@@ -11,6 +11,8 @@
     [Udt]             DATETIME     CONSTRAINT [DF_TrayMapHeader_Udt] DEFAULT (getdate()) NULL,
     CONSTRAINT [PK_TrayMapHeader] PRIMARY KEY CLUSTERED ([TrayMapId] ASC)
 );
+
+
 
 
 

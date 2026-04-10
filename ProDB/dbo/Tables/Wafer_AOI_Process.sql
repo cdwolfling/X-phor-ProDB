@@ -1,12 +1,14 @@
 ﻿CREATE TABLE [dbo].[Wafer_AOI_Process] (
-    [Seqid]        INT         IDENTITY (1, 1) NOT NULL,
-    [ProductModel] VARCHAR (8) NULL,
-    [LotNo]        VARCHAR (7) NULL,
-    [Wafer]        VARCHAR (3) NULL,
-    [Cdt]          DATETIME    CONSTRAINT [DF_Wafer_AOI_Process_Cdt] DEFAULT (getdate()) NULL,
-    [Udt]          DATETIME    CONSTRAINT [DF_Wafer_AOI_Process_Udt] DEFAULT (getdate()) NULL,
+    [Seqid]        INT          IDENTITY (1, 1) NOT NULL,
+    [ProductModel] VARCHAR (20) NULL,
+    [LotNo]        VARCHAR (7)  NULL,
+    [Wafer]        VARCHAR (3)  NULL,
+    [Cdt]          DATETIME     CONSTRAINT [DF_Wafer_AOI_Process_Cdt] DEFAULT (getdate()) NULL,
+    [Udt]          DATETIME     CONSTRAINT [DF_Wafer_AOI_Process_Udt] DEFAULT (getdate()) NULL,
     CONSTRAINT [PK_Wafer_AOI_Process] PRIMARY KEY CLUSTERED ([Seqid] ASC)
 );
+
+
 
 
 

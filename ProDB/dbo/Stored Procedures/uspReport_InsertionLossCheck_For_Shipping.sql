@@ -12,6 +12,7 @@ exec [dbo].[uspReport_InsertionLossCheck_For_Shipping] @Ship_date='2026-04-07', 
 exec [dbo].[uspReport_InsertionLossCheck_For_Shipping] @Ship_date='2026-04-07', @Customer_Code='SZ04000', @PO='81000012938'
 
 Change Log:
+2026-04-08 JC: output ReferenceProject, ReferencePN
 2026-04-07 JC: Base [dbo].[uspGenerateShippingData]
 -- =============================================
 */
@@ -33,9 +34,7 @@ BEGIN
 	create table #InsertionLossCheck_ShippingData(Ship_date date, Lot_Wafer_Box_ID varchar(20), SN BIGINT
 		, Onchip_loss_CH01_MPD decimal(15,6), Onchip_loss_CH02_MPD decimal(15,6), Onchip_loss_CH03_MPD decimal(15,6), Onchip_loss_CH04_MPD decimal(15,6)
 		, Onchip_loss_CH05_MPD decimal(15,6), Onchip_loss_CH06_MPD decimal(15,6), Onchip_loss_CH07_MPD decimal(15,6), Onchip_loss_CH08_MPD decimal(15,6)
-        , PO varchar(25)
-		)
-
+        , PO varchar(25), ReferenceProject varchar(15), ReferencePN varchar(50))
     
 	IF OBJECT_ID('tempdb..#PO_List') IS NOT NULL DROP TABLE #PO_List
     create table #PO_List(Seqid INT identity(1,1), PO varchar(25))
@@ -67,10 +66,9 @@ BEGIN
 
     
 	IF OBJECT_ID('tempdb..#InsertionLossCheck_Summary') IS NOT NULL DROP TABLE #InsertionLossCheck_Summary
-    create table #InsertionLossCheck_Summary(Ship_date date, Customer_Code varchar(15), PO varchar(25), Qty INT, testdataQty INT)
-    insert #InsertionLossCheck_Summary(Ship_date,Customer_Code,PO,Qty, testdataQty)
-	    select s.Ship_date, s.Customer_Code, s.PO, sum(s.Ship_Qty) as Qty,0
-        --, 'Pass' as CheckResult
+    create table #InsertionLossCheck_Summary(Ship_date date, Customer_Code varchar(15), PO varchar(25), Qty INT, testdataQty INT, ReferenceProject varchar(15), ReferencePN varchar(50))
+    insert #InsertionLossCheck_Summary(Ship_date,Customer_Code,PO,Qty, testdataQty, ReferenceProject, ReferencePN)
+	    select s.Ship_date, s.Customer_Code, s.PO, sum(s.Ship_Qty) as Qty,0,max(s.Project),max(s.PN)
 		from dbo.Shipping_list s
 		where s.Ship_date between @Ship_date and @Ship_date and s.Customer_Code = @Customer_Code
         and (s.PO=@PO or @PO is null)
@@ -78,11 +76,13 @@ BEGIN
 
     ;with cte as(
         select z.PO,count(1) as testdataQty from #InsertionLossCheck_ShippingData z group by z.PO)
-        update z set z.testdataQty=c.testdataQty from cte c
+        update z set z.testdataQty=c.testdataQty, z.ReferenceProject=z.ReferenceProject, z.ReferencePN=z.ReferencePN
+        from cte c
         join #InsertionLossCheck_Summary z on c.PO=z.PO
 
     select s.Ship_date, s.Customer_Code, s.PO, s.Qty, s.testdataQty
         , case when s.Qty=s.testdataQty then 'Pass' else 'Fail' end as CheckResult
+        , s.ReferenceProject, s.ReferencePN
 		from #InsertionLossCheck_Summary s
 
 END;

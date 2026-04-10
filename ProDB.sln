@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.4.11620.152 stable
+VisualStudioVersion = 18.4.11620.152
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{00D1A9C2-B5F0-4AF3-8072-F6C62B433612}") = "ProDB", "ProDB.sqlproj", "{8B42934F-A7C0-4A2A-A70A-8D26FDE7B47C}"
+Project("{00D1A9C2-B5F0-4AF3-8072-F6C62B433612}") = "ProDB", "ProDB\ProDB.sqlproj", "{8B42934F-A7C0-4A2A-A70A-8D26FDE7B47C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

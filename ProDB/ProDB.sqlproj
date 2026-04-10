@@ -189,7 +189,6 @@
     <Build Include="dbo\Views\vw_CPTestData_Coral6p0.sql" />
     <Build Include="dbo\Stored Procedures\usp_GenerateTrayMap_ForWrongBin78.sql" />
     <Build Include="dbo\Tables\LotWafer_UEC_Mean_Std.sql" />
-    <Build Include="dbo\Tables\LotWafer_UEC_Data.sql" />
     <Build Include="dbo\Functions\ufn_GetChipBin_FromCPData.sql" />
     <Build Include="dbo\Tables\Z_Die_Bin7Case_Coral6p0_33Wafer_BinmapV1.sql" />
     <Build Include="dbo\Tables\TestTime_Record.sql" />
@@ -203,6 +202,10 @@
     <Build Include="dbo\Stored Procedures\uspReport_BinmapCheck_For_Shipping.sql" />
     <Build Include="dbo\Stored Procedures\usp_Insert_TestTime_Record.sql" />
     <Build Include="Security\spec.sql" />
+    <Build Include="dbo\Views\vw_CPTestData_Coral3p1.sql" />
+    <Build Include="dbo\Functions\ufn_GetChipBin_FromCPData_Coral6p0.sql" />
+    <Build Include="dbo\Functions\ufn_GetChipBin_FromCPData_Coral3p1.sql" />
+    <Build Include="dbo\Stored Procedures\uspSync_LotWafer_UEC_Mean_Std.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Project2DEV.scmp" />

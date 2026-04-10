@@ -10,6 +10,7 @@ exec [dbo].[uspReport_BinmapCheck_For_Shipping] @ProductFamily='Coral6p0', @Ship
 exec [dbo].[uspReport_BinmapCheck_For_Shipping] @ProductFamily='Coral6p0', @Ship_date='2026-04-07', @Customer_Code='QD01000'
 
 Change Log:
+2026-04-09 JC: Replace ufn_GetChipBin_FromCPData with ufn_GetChipBin_FromCPData_Coral6p0
 -- =============================================
 */
 CREATE   PROCEDURE [dbo].[uspReport_BinmapCheck_For_Shipping]
@@ -34,7 +35,7 @@ BEGIN
 	IF OBJECT_ID('tempdb..#ShippingUnit') IS NOT NULL DROP TABLE #ShippingUnit
 	create table #ShippingUnit(Ship_date date, Customer_Code varchar(15), PO varchar(25), Lot_Wafer_Box_ID varchar(20), LotWafer varchar(11), ChipSN varchar(11), ShippingBin INT, MESBin INT)
 	insert #ShippingUnit(Ship_date, Customer_Code, PO, Lot_Wafer_Box_ID, LotWafer, ChipSN, ShippingBin, MESBin)
-		select s.Ship_date, s.Customer_Code, PO, s.Lot_Wafer_Box_ID, tray.LotWafer, tray.ChipSN, d.Bin, dbo.ufn_GetChipBin_FromCPData(tray.LotWafer,tray.ChipSN)
+		select s.Ship_date, s.Customer_Code, PO, s.Lot_Wafer_Box_ID, tray.LotWafer, tray.ChipSN, d.Bin, dbo.ufn_GetChipBin_FromCPData_Coral6p0(tray.LotWafer,tray.ChipSN)
 		from dbo.Shipping_list s
 		join dbo.vw_TrayMap tray on s.Lot_Wafer_Box_ID=tray.LotWaferTrayKey
         join dbo.Die d on tray.LotWafer=d.LotWafer and tray.ChipSN=d.Cbin

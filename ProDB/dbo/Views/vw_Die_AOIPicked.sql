@@ -1,4 +1,5 @@
 ﻿
+
 /*
 ==========================================================================
 视图名称：vw_Die_AOIPicked
@@ -7,6 +8,7 @@
 SELECT * FROM dbo.vw_Die_AOIPicked
 
 Change Log:
+    2026-04-10 JC: ProductModel改为取'_'之前的值， 例如 CORAL3P1-A3_LExxxxx-W24-V12 AOI.xlsm
     2026-01-23 JC: 输出ProductModel为varchar(8)
     2026-01-19 JC: 排除已包装的数据
     2025-12-24 JC: 查(Traveler有变动的)3天内 的 AOI Defect
@@ -15,7 +17,23 @@ Change Log:
 */
 CREATE VIEW [dbo].[vw_Die_AOIPicked]
 AS
-SELECT convert(varchar(8),LEFT(w.SourceName, 8)) AS ProductModel, w.Wafer号, d.BoxNo, d.AOI_name, d.Cbin, d.Seqid
+SELECT CONVERT
+    (
+        varchar(20),
+        LEFT
+        (
+            w.SourceName,
+            CASE
+                WHEN CHARINDEX('_', w.SourceName) > 0
+                    THEN
+                        CASE
+                            WHEN CHARINDEX('_', w.SourceName) - 1 > 20 THEN 20
+                            ELSE CHARINDEX('_', w.SourceName) - 1
+                        END
+                ELSE 20
+            END
+        )
+    ) AS ProductModel, w.Wafer号, d.BoxNo, d.AOI_name, d.Cbin, d.Seqid
     FROM
     dbo.Wafer w
     INNER JOIN dbo.Die d ON w.Wafer号 = d.LotWafer

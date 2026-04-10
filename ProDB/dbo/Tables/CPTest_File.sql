@@ -1,6 +1,6 @@
 ﻿CREATE TABLE [dbo].[CPTest_File] (
     [FileId]              BIGINT        IDENTITY (1, 1) NOT NULL,
-    [ProductModel]        VARCHAR (8)   NULL,
+    [ProductModel]        VARCHAR (20)  NULL,
     [LotWafer]            VARCHAR (11)  NOT NULL,
     [FileModifiedTime]    DATETIME      NOT NULL,
     [FilePath]            VARCHAR (400) NOT NULL,
@@ -11,6 +11,8 @@
     CONSTRAINT [PK_CPTest_File] PRIMARY KEY CLUSTERED ([FileId] ASC),
     CONSTRAINT [UQ_CPTest_File] UNIQUE NONCLUSTERED ([LotWafer] ASC, [FileModifiedTime] ASC)
 );
+
+
 
 
 

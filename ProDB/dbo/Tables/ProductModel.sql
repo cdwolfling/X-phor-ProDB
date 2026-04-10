@@ -1,5 +1,5 @@
 ﻿CREATE TABLE [dbo].[ProductModel] (
-    [ProductModel]       VARCHAR (8)    NOT NULL,
+    [ProductModel]       VARCHAR (20)   NOT NULL,
     [Retical_X]          INT            NULL,
     [Retical_Y]          INT            NULL,
     [Binmap_X]           INT            NULL,
@@ -11,6 +11,8 @@
     [txtBinmapFolder_V2] VARCHAR (1000) NULL,
     CONSTRAINT [PK_ProductModel] PRIMARY KEY CLUSTERED ([ProductModel] ASC)
 );
+
+
 
 
 

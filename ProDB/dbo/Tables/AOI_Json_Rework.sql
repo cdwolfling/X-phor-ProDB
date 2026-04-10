@@ -1,6 +1,6 @@
 ﻿CREATE TABLE [dbo].[AOI_Json_Rework] (
     [ID]               INT            IDENTITY (1, 1) NOT NULL,
-    [ProductModel]     VARCHAR (8)    NULL,
+    [ProductModel]     VARCHAR (20)   NULL,
     [LotNo]            VARCHAR (7)    NULL,
     [Wafer]            VARCHAR (3)    NULL,
     [TrayNo]           VARCHAR (2)    NULL,

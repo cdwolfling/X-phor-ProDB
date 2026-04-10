@@ -1,52 +1,49 @@
 ﻿/*
 Create by Jackiech on 2026-04-01
-
--- 单颗查询
 SELECT dbo.ufn_GetChipBin_FromCPData('LN41477-W01', 'E07-403') AS Bin
-
--- 整片 Wafer 批量出 Bin 结果
-SELECT
-    ChipSN,
-    dbo.ufn_GetChipBin_FromCPData(LotWafer, ChipSN) AS Bin
-FROM dbo.vw_CPTestData_Coral6p0
-WHERE LotWafer = 'LN41477-W01'
-ORDER BY ChipSN
-
--- 统计各 Bin 数量与良率
-SELECT
-    Bin,
-    COUNT(*) AS cnt,
-    CAST(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER() AS DECIMAL(5,2)) AS pct
-FROM (
-    SELECT dbo.ufn_GetChipBin_FromCPData(LotWafer, ChipSN) AS Bin
-    FROM dbo.vw_CPTestData_Coral6p0
-    WHERE LotWafer = 'LN41477-W01'
-) t
-GROUP BY Bin
-ORDER BY Bin
-
-TODO: Coral6p0以外产品是适配， 测试
+--Coral3p1
+select w.Wafer号,d.Cbin,d.Bin, dbo.ufn_GetChipBin_FromCPData(d.LotWafer, d.Cbin) as MES_Bin
+    from dbo.Die d
+    join dbo.Wafer w on d.LotWafer=w.Wafer号
+    where w.测试结束时间 between '2026-03-01' and  '2026-03-01 8:00' and d.Bin not in (0,3) and w.SourceName like 'Coral3p1%'
+    and case when d.Bin in (4,5) then 1 else d.Bin end<>dbo.ufn_GetChipBin_FromCPData(d.LotWafer, d.Cbin)
+--Coral6p0
+select *, dbo.ufn_GetChipBin_FromCPData(w82.LotWafer,w82.Cbin) as MES_Bin from dbo.Die_WrongBin7_82Wafer w82
+    where w82.Bin=7 and w82.Bin_V3<>dbo.ufn_GetChipBin_FromCPData(w82.LotWafer,w82.Cbin)
 
 Change Log:
+2026-04-10 JC: bugfix, 修正取@mean @std的逻辑
+2026-04-09 JC: 改用[dbo].[ufn_GetChipBin_FromCPData_Coral3p1]的判断方式; 增加Debug信息
+2026-04-09 JC: 无测试结果， 返回0； 无部分测试项， 返回2
 2026-04-02 JC: 使用dbo.LotWafer_UEC_Mean_Std 取代 ufn_GetUEC_Bounds/ufn_GetUEC_Mean_Std/dbo.LotWafer_UEC_Data
 2026-04-01 JC: (临时)使用dbo.LotWafer_UEC_Data 取代 ufn_GetUEC_Bounds
 */
-CREATE   FUNCTION [dbo].[ufn_GetChipBin_FromCPData]
+CREATE FUNCTION [dbo].[ufn_GetChipBin_FromCPData]
 (
-    @LotWafer  NVARCHAR(50),
-    @ChipSN    NVARCHAR(50)
+    @LotWafer VARCHAR(50),
+    @ChipSN   VARCHAR(50)
 )
 RETURNS INT
 AS
 BEGIN
-    DECLARE @Bin INT = 2  -- 默认 Bin2（兜底）
+    DECLARE @Bin INT = 2;  -- 默认 Bin2（兜底）
+    DECLARE @ChannelNum INT, @impdNum INT
 
     -- =============================================
     -- 1. Spec 参数（替换为从配置表动态读取）
     -- =============================================
-    DECLARE @ProductFamily      NVARCHAR(50)
-
-    select @ProductFamily=left(w.SourceName,8) from dbo.Wafer w where w.Wafer号=@LotWafer
+    DECLARE @ProductFamily      VARCHAR(50)
+    SELECT @ProductFamily=left(w.SourceName,8) from dbo.Wafer w where w.Wafer号=@LotWafer
+    SELECT @ChannelNum = case when @ProductFamily in ('Coral3p1','Coral3p5') then 4
+                            when @ProductFamily in ('Coral4p1','Coral6p0') then 8
+                        end
+    SELECT @impdNum = case when @ProductFamily in ('Coral3p1','Coral3p5') then 1
+                            when @ProductFamily in ('Coral4p1','Coral6p0') then 2
+                        end
+    IF @ChannelNum is null
+    BEGIN
+        RETURN -1
+    END;
 
     DECLARE @uec_low            FLOAT
     DECLARE @uec_high           FLOAT
@@ -91,27 +88,23 @@ BEGIN
       AND v.IsActive = 1
 
     -- =============================================
-    -- 2. 取芯片数据到临时表
+    -- 2. 取芯片数据
     -- =============================================
-    DECLARE @v TABLE (
+    DECLARE @v TABLE
+    (
         UEC_Onchip           FLOAT,
         CH01 FLOAT, CH02 FLOAT, CH03 FLOAT, CH04 FLOAT,
         CH05 FLOAT, CH06 FLOAT, CH07 FLOAT, CH08 FLOAT,
-        Loss_range           FLOAT,
+        Loss_range             FLOAT,
+        
         ER_CH01 FLOAT, ER_CH02 FLOAT, ER_CH03 FLOAT, ER_CH04 FLOAT,
         ER_CH05 FLOAT, ER_CH06 FLOAT, ER_CH07 FLOAT, ER_CH08 FLOAT,
         PPI_CH01 FLOAT, PPI_CH02 FLOAT, PPI_CH03 FLOAT, PPI_CH04 FLOAT,
         PPI_CH05 FLOAT, PPI_CH06 FLOAT, PPI_CH07 FLOAT, PPI_CH08 FLOAT,
         HTU_CH01 FLOAT, HTU_CH02 FLOAT, HTU_CH03 FLOAT, HTU_CH04 FLOAT,
         HTU_CH05 FLOAT, HTU_CH06 FLOAT, HTU_CH07 FLOAT, HTU_CH08 FLOAT,
-        OMPDM_CH01_OC FLOAT, OMPDM_CH02_OC FLOAT,
-        OMPDM_CH03_OC FLOAT, OMPDM_CH04_OC FLOAT,
-        OMPDM_CH05_OC FLOAT, OMPDM_CH06_OC FLOAT,
-        OMPDM_CH07_OC FLOAT, OMPDM_CH08_OC FLOAT,
-        OMPDS_CH01_OC FLOAT, OMPDS_CH02_OC FLOAT,
-        OMPDS_CH03_OC FLOAT, OMPDS_CH04_OC FLOAT,
-        OMPDS_CH05_OC FLOAT, OMPDS_CH06_OC FLOAT,
-        OMPDS_CH07_OC FLOAT, OMPDS_CH08_OC FLOAT,
+        
+        IMPD_CH01_C   FLOAT, IMPD_CH02_C   FLOAT,  -- impdNum
         OMPDM_CH01_C  FLOAT, OMPDM_CH02_C  FLOAT,
         OMPDM_CH03_C  FLOAT, OMPDM_CH04_C  FLOAT,
         OMPDM_CH05_C  FLOAT, OMPDM_CH06_C  FLOAT,
@@ -120,86 +113,140 @@ BEGIN
         OMPDS_CH03_C  FLOAT, OMPDS_CH04_C  FLOAT,
         OMPDS_CH05_C  FLOAT, OMPDS_CH06_C  FLOAT,
         OMPDS_CH07_C  FLOAT, OMPDS_CH08_C  FLOAT,
-        IMPD_CH01_C   FLOAT, IMPD_CH02_C   FLOAT,  -- impdNum=2
-        Onchip_loss_CH01_MPD FLOAT, Onchip_loss_CH02_MPD FLOAT,
-        Onchip_loss_CH03_MPD FLOAT, Onchip_loss_CH04_MPD FLOAT,
-        Onchip_loss_CH05_MPD FLOAT, Onchip_loss_CH06_MPD FLOAT,
-        Onchip_loss_CH07_MPD FLOAT, Onchip_loss_CH08_MPD FLOAT,
-        MPD_Loss_range FLOAT
-    )
-
+        
+        Onchip_loss_CH01_MPD   FLOAT,
+        Onchip_loss_CH02_MPD   FLOAT,
+        Onchip_loss_CH03_MPD   FLOAT,
+        Onchip_loss_CH04_MPD   FLOAT,
+        Onchip_loss_CH05_MPD   FLOAT,
+        Onchip_loss_CH06_MPD   FLOAT,
+        Onchip_loss_CH07_MPD   FLOAT,
+        Onchip_loss_CH08_MPD   FLOAT,
+        MPD_Loss_range         FLOAT,
+        
+        OMPDM_CH01_db          FLOAT,
+        OMPDM_CH02_db          FLOAT,
+        OMPDM_CH03_db          FLOAT,
+        OMPDM_CH04_db          FLOAT,
+        OMPDM_CH05_db          FLOAT,
+        OMPDM_CH06_db          FLOAT,
+        OMPDM_CH07_db          FLOAT,
+        OMPDM_CH08_db          FLOAT,
+        OMPDS_CH01_db          FLOAT,
+        OMPDS_CH02_db          FLOAT,
+        OMPDS_CH03_db          FLOAT,
+        OMPDS_CH04_db          FLOAT,
+        OMPDS_CH05_db          FLOAT,
+        OMPDS_CH06_db          FLOAT,
+        OMPDS_CH07_db          FLOAT,
+        OMPDS_CH08_db          FLOAT
+    );
     INSERT INTO @v
-    SELECT
+    SELECT 
         UEC_Onchip,
-        CH01,CH02,CH03,CH04,CH05,CH06,CH07,CH08,
-        Loss_range,
+        CH01,CH02,CH03,CH04,CH05,CH06,CH07,CH08, Loss_range,
         ER_CH01,ER_CH02,ER_CH03,ER_CH04,ER_CH05,ER_CH06,ER_CH07,ER_CH08,
         PPI_CH01,PPI_CH02,PPI_CH03,PPI_CH04,PPI_CH05,PPI_CH06,PPI_CH07,PPI_CH08,
         HTU_CH01,HTU_CH02,HTU_CH03,HTU_CH04,HTU_CH05,HTU_CH06,HTU_CH07,HTU_CH08,
-        OMPDM_CH01_OC,OMPDM_CH02_OC,OMPDM_CH03_OC,OMPDM_CH04_OC,
-        OMPDM_CH05_OC,OMPDM_CH06_OC,OMPDM_CH07_OC,OMPDM_CH08_OC,
-        OMPDS_CH01_OC,OMPDS_CH02_OC,OMPDS_CH03_OC,OMPDS_CH04_OC,
-        OMPDS_CH05_OC,OMPDS_CH06_OC,OMPDS_CH07_OC,OMPDS_CH08_OC,
-        OMPDM_CH01_C,OMPDM_CH02_C,OMPDM_CH03_C,OMPDM_CH04_C,
-        OMPDM_CH05_C,OMPDM_CH06_C,OMPDM_CH07_C,OMPDM_CH08_C,
-        OMPDS_CH01_C,OMPDS_CH02_C,OMPDS_CH03_C,OMPDS_CH04_C,
-        OMPDS_CH05_C,OMPDS_CH06_C,OMPDS_CH07_C,OMPDS_CH08_C,
         IMPD_CH01_C,IMPD_CH02_C,
-        Onchip_loss_CH01_MPD,Onchip_loss_CH02_MPD,
-        Onchip_loss_CH03_MPD,Onchip_loss_CH04_MPD,
-        Onchip_loss_CH05_MPD,Onchip_loss_CH06_MPD,
-        Onchip_loss_CH07_MPD,Onchip_loss_CH08_MPD,
-        MPD_Loss_range
-    FROM dbo.vw_CPTestData_Coral6p0 v
-    WHERE LotWafer = @LotWafer and v.isRecent=1
-      AND ChipSN   = @ChipSN
+        OMPDM_CH01_C,OMPDM_CH02_C,OMPDM_CH03_C,OMPDM_CH04_C,OMPDM_CH05_C,OMPDM_CH06_C,OMPDM_CH07_C,OMPDM_CH08_C,
+        OMPDS_CH01_C,OMPDS_CH02_C,OMPDS_CH03_C,OMPDS_CH04_C,OMPDS_CH05_C,OMPDS_CH06_C,OMPDS_CH07_C,OMPDS_CH08_C,        
+        Onchip_loss_CH01_MPD,Onchip_loss_CH02_MPD,Onchip_loss_CH03_MPD,Onchip_loss_CH04_MPD,Onchip_loss_CH05_MPD,Onchip_loss_CH06_MPD,Onchip_loss_CH07_MPD,Onchip_loss_CH08_MPD,
+        MPD_Loss_range,
+        OMPDM_CH01_db, OMPDM_CH02_db, OMPDM_CH03_db, OMPDM_CH04_db, OMPDM_CH05_db, OMPDM_CH06_db, OMPDM_CH07_db, OMPDM_CH08_db,
+        OMPDS_CH01_db, OMPDS_CH02_db, OMPDS_CH03_db, OMPDS_CH04_db, OMPDS_CH05_db, OMPDS_CH06_db, OMPDS_CH07_db, OMPDS_CH08_db
+    FROM dbo.vw_CPTestData v
+    WHERE v.LotWafer = @LotWafer
+        AND v.ChipSN   = @ChipSN
+        AND v.isRecent = 1;
+    
+    IF NOT EXISTS (SELECT 1 FROM @v)
+    BEGIN
+        --PRINT '找不到数据'
+        RETURN 0;
+    END;
 
     -- =============================================
-    -- Step 1：非数值检查 → Bin 2
-    -- 任一判定列为 NULL 则直接返回 Bin 2
+    -- 3. 非数值检查
+    --    任一必需判定列为空，直接 Bin2
     -- =============================================
-    IF EXISTS (
-        SELECT 1 FROM @v WHERE
-            UEC_Onchip IS NULL OR
-            CH01 IS NULL OR CH02 IS NULL OR CH03 IS NULL OR CH04 IS NULL OR
-            CH05 IS NULL OR CH06 IS NULL OR CH07 IS NULL OR CH08 IS NULL OR
-            Loss_range IS NULL OR
-            ER_CH01 IS NULL OR ER_CH02 IS NULL OR ER_CH03 IS NULL OR ER_CH04 IS NULL OR
-            ER_CH05 IS NULL OR ER_CH06 IS NULL OR ER_CH07 IS NULL OR ER_CH08 IS NULL OR
-            PPI_CH01 IS NULL OR PPI_CH02 IS NULL OR PPI_CH03 IS NULL OR PPI_CH04 IS NULL OR
-            PPI_CH05 IS NULL OR PPI_CH06 IS NULL OR PPI_CH07 IS NULL OR PPI_CH08 IS NULL OR
-            HTU_CH01 IS NULL OR HTU_CH02 IS NULL OR HTU_CH03 IS NULL OR HTU_CH04 IS NULL OR
-            HTU_CH05 IS NULL OR HTU_CH06 IS NULL OR HTU_CH07 IS NULL OR HTU_CH08 IS NULL OR
-            OMPDM_CH01_OC IS NULL OR OMPDM_CH02_OC IS NULL OR
-            OMPDM_CH03_OC IS NULL OR OMPDM_CH04_OC IS NULL OR
-            OMPDM_CH05_OC IS NULL OR OMPDM_CH06_OC IS NULL OR
-            OMPDM_CH07_OC IS NULL OR OMPDM_CH08_OC IS NULL OR
-            OMPDS_CH01_OC IS NULL OR OMPDS_CH02_OC IS NULL OR
-            OMPDS_CH03_OC IS NULL OR OMPDS_CH04_OC IS NULL OR
-            OMPDS_CH05_OC IS NULL OR OMPDS_CH06_OC IS NULL OR
-            OMPDS_CH07_OC IS NULL OR OMPDS_CH08_OC IS NULL OR
-            OMPDM_CH01_C IS NULL OR OMPDM_CH02_C IS NULL OR
-            OMPDM_CH03_C IS NULL OR OMPDM_CH04_C IS NULL OR
-            OMPDM_CH05_C IS NULL OR OMPDM_CH06_C IS NULL OR
-            OMPDM_CH07_C IS NULL OR OMPDM_CH08_C IS NULL OR
-            OMPDS_CH01_C IS NULL OR OMPDS_CH02_C IS NULL OR
-            OMPDS_CH03_C IS NULL OR OMPDS_CH04_C IS NULL OR
-            OMPDS_CH05_C IS NULL OR OMPDS_CH06_C IS NULL OR
-            OMPDS_CH07_C IS NULL OR OMPDS_CH08_C IS NULL OR
-            IMPD_CH01_C IS NULL OR IMPD_CH02_C IS NULL OR
-            Onchip_loss_CH01_MPD IS NULL OR Onchip_loss_CH02_MPD IS NULL OR
-            Onchip_loss_CH03_MPD IS NULL OR Onchip_loss_CH04_MPD IS NULL OR
-            Onchip_loss_CH05_MPD IS NULL OR Onchip_loss_CH06_MPD IS NULL OR
-            Onchip_loss_CH07_MPD IS NULL OR Onchip_loss_CH08_MPD IS NULL
-            --OR MPD_Loss_range IS NULL
-    )
+    IF @ChannelNum = 4 and @impdNum = 1
     BEGIN
-        RETURN 2  -- 非数值 → Bin 2，终止
+        IF EXISTS
+        (
+            SELECT 1
+            FROM @v
+            WHERE UEC_Onchip IS NULL
+               OR CH01 IS NULL OR CH02 IS NULL OR CH03 IS NULL OR CH04 IS NULL 
+               OR Loss_range IS NULL
+               OR ER_CH01 IS NULL OR ER_CH02 IS NULL OR ER_CH03 IS NULL OR ER_CH04 IS NULL
+               OR PPI_CH01 IS NULL OR PPI_CH02 IS NULL OR PPI_CH03 IS NULL OR PPI_CH04 IS NULL
+               OR HTU_CH01 IS NULL OR HTU_CH02 IS NULL OR HTU_CH03 IS NULL OR HTU_CH04 IS NULL
+               OR IMPD_CH01_C IS NULL
+               OR OMPDM_CH01_C IS NULL OR OMPDM_CH02_C IS NULL OR OMPDM_CH03_C IS NULL OR OMPDM_CH04_C IS NULL
+               OR OMPDS_CH01_C IS NULL OR OMPDS_CH02_C IS NULL OR OMPDS_CH03_C IS NULL OR OMPDS_CH04_C IS NULL
+               OR Onchip_loss_CH01_MPD IS NULL OR Onchip_loss_CH02_MPD IS NULL OR Onchip_loss_CH03_MPD IS NULL OR Onchip_loss_CH04_MPD IS NULL
+               OR OMPDM_CH01_db IS NULL OR OMPDM_CH02_db IS NULL OR OMPDM_CH03_db IS NULL OR OMPDM_CH04_db IS NULL
+               OR OMPDS_CH01_db IS NULL OR OMPDS_CH02_db IS NULL OR OMPDS_CH03_db IS NULL OR OMPDS_CH04_db IS NULL
+        )
+        BEGIN
+            RETURN 2;
+        END;
     END
-    UPDATE v
-        SET v.MPD_Loss_range = ca.max_loss - ca.min_loss
+    ELSE IF @ChannelNum = 8 and @impdNum = 2
+    BEGIN
+        IF EXISTS
+        (
+            SELECT 1
+            FROM @v
+            WHERE UEC_Onchip IS NULL
+               OR CH01 IS NULL OR CH02 IS NULL OR CH03 IS NULL OR CH04 IS NULL OR CH05 IS NULL OR CH06 IS NULL OR CH07 IS NULL OR CH08 IS NULL
+               OR Loss_range IS NULL
+               OR ER_CH01 IS NULL OR ER_CH02 IS NULL OR ER_CH03 IS NULL OR ER_CH04 IS NULL
+               OR ER_CH05 IS NULL OR ER_CH06 IS NULL OR ER_CH07 IS NULL OR ER_CH08 IS NULL
+               OR PPI_CH01 IS NULL OR PPI_CH02 IS NULL OR PPI_CH03 IS NULL OR PPI_CH04 IS NULL
+               OR PPI_CH05 IS NULL OR PPI_CH06 IS NULL OR PPI_CH07 IS NULL OR PPI_CH08 IS NULL
+               OR HTU_CH01 IS NULL OR HTU_CH02 IS NULL OR HTU_CH03 IS NULL OR HTU_CH04 IS NULL
+               OR HTU_CH05 IS NULL OR HTU_CH06 IS NULL OR HTU_CH07 IS NULL OR HTU_CH08 IS NULL
+               OR IMPD_CH01_C IS NULL OR IMPD_CH02_C IS NULL
+               OR OMPDM_CH01_C IS NULL OR OMPDM_CH02_C IS NULL OR OMPDM_CH03_C IS NULL OR OMPDM_CH04_C IS NULL OR OMPDM_CH05_C IS NULL OR OMPDM_CH06_C IS NULL OR OMPDM_CH07_C IS NULL OR OMPDM_CH08_C IS NULL
+               OR OMPDS_CH01_C IS NULL OR OMPDS_CH02_C IS NULL OR OMPDS_CH03_C IS NULL OR OMPDS_CH04_C IS NULL OR OMPDS_CH05_C IS NULL OR OMPDS_CH06_C IS NULL OR OMPDS_CH07_C IS NULL OR OMPDS_CH08_C IS NULL
+               OR Onchip_loss_CH01_MPD IS NULL OR Onchip_loss_CH02_MPD IS NULL OR Onchip_loss_CH03_MPD IS NULL OR Onchip_loss_CH04_MPD IS NULL OR Onchip_loss_CH05_MPD IS NULL OR Onchip_loss_CH06_MPD IS NULL OR Onchip_loss_CH07_MPD IS NULL OR Onchip_loss_CH08_MPD IS NULL
+               OR OMPDM_CH01_db IS NULL OR OMPDM_CH02_db IS NULL OR OMPDM_CH03_db IS NULL OR OMPDM_CH04_db IS NULL OR OMPDM_CH05_db IS NULL OR OMPDM_CH06_db IS NULL OR OMPDM_CH07_db IS NULL OR OMPDM_CH08_db IS NULL
+               OR OMPDS_CH01_db IS NULL OR OMPDS_CH02_db IS NULL OR OMPDS_CH03_db IS NULL OR OMPDS_CH04_db IS NULL OR OMPDS_CH05_db IS NULL OR OMPDS_CH06_db IS NULL OR OMPDS_CH07_db IS NULL OR OMPDS_CH08_db IS NULL
+        )
+        BEGIN
+            RETURN 2;
+        END;
+    END
+
+    -- 若 MPD_Loss_range 未落表，则按 4 个 MPD loss 现算
+    IF @ChannelNum = 4 and @impdNum = 1
+    BEGIN
+        UPDATE v
+           SET v.MPD_Loss_range = ca.max_loss - ca.min_loss
         FROM @v v
-        CROSS APPLY (
+        CROSS APPLY
+        (
+            SELECT
+                MAX(x.loss) AS max_loss,
+                MIN(x.loss) AS min_loss
+            FROM (VALUES
+                (v.Onchip_loss_CH01_MPD),
+                (v.Onchip_loss_CH02_MPD),
+                (v.Onchip_loss_CH03_MPD),
+                (v.Onchip_loss_CH04_MPD)
+            ) AS x(loss)
+        ) ca
+        WHERE v.MPD_Loss_range IS NULL;
+    END
+    ELSE IF @ChannelNum = 8 and @impdNum = 2
+    BEGIN
+        UPDATE v
+           SET v.MPD_Loss_range = ca.max_loss - ca.min_loss
+        FROM @v v
+        CROSS APPLY
+        (
             SELECT
                 MAX(x.loss) AS max_loss,
                 MIN(x.loss) AS min_loss
@@ -215,211 +262,328 @@ BEGIN
             ) AS x(loss)
         ) ca
         WHERE v.MPD_Loss_range IS NULL;
-
-    -- =============================================
-    -- 中间变量
-    -- =============================================
-    DECLARE @mean    FLOAT
-    DECLARE @std    FLOAT
-    DECLARE @uec_upper    FLOAT
-    DECLARE @uec_lower    FLOAT
-    DECLARE @fail_nonER   INT = 0
-    DECLARE @fail_ER      INT = 0
-    DECLARE @min_ER       FLOAT
-
-    -- UEC 动态上下限（对应 uec_onchip_std 乘子）
-    SELECT @mean = Mean,
-           @std = Std
-        FROM dbo.LotWafer_UEC_Mean_Std l
-        JOIN dbo.CPTest_File f on l.LotWafer = f.LotWafer and f.isRecent = 1
-        WHERE l.LotWafer = @LotWafer AND L.Cdt >= f.FileModifiedTime
-    SELECT @uec_upper=@mean+@std_multiplier*@std
-    SELECT @uec_lower=@mean-@std_multiplier*@std
-    IF @uec_upper IS NULL OR @uec_lower IS NULL
-    BEGIN
-        RETURN -1  -- 未能找到mean/std/@std_multiplier, 提前中止
     END
-    SET @uec_upper = CASE WHEN @uec_upper < @uec_high THEN @uec_upper ELSE @uec_high END
-    SET @uec_lower = CASE WHEN @uec_lower > @uec_low  THEN @uec_lower ELSE @uec_low  END
 
     -- =============================================
-    -- Step 2 准备：各项 Fail 判定（不含ER）
+    -- 4. 取 whole wafer 的 mean/std，生成 UEC 动态上下限, 再结合@uec_high/@uec_low
     -- =============================================
-    -- UEC
-    IF EXISTS (
-        SELECT 1 FROM @v
-        WHERE UEC_Onchip < @uec_lower OR UEC_Onchip > @uec_upper
-    ) SET @fail_nonER = 1
+    DECLARE @mean         FLOAT;
+    DECLARE @std          FLOAT;
+    DECLARE @uec_upper    FLOAT;
+    DECLARE @uec_lower    FLOAT;
+    DECLARE @FileModifiedTime DATETIME
+    SELECT @FileModifiedTime=f.FileModifiedTime FROM dbo.CPTest_File f WHERE f.LotWafer=@LotWafer AND f.isRecent=1
+    SELECT TOP (1)
+           @mean = l.[Mean],
+           @std  = l.[Std]
+    FROM dbo.LotWafer_UEC_Mean_Std l
+    WHERE l.LotWafer = @LotWafer
+    AND ISNULL(l.Udt,l.Cdt) >= @FileModifiedTime
 
-    -- Link Loss CH01~CH08
-    IF EXISTS (
-        SELECT 1 FROM @v WHERE
-            CH01<@loss_low OR CH01>@loss_high OR
-            CH02<@loss_low OR CH02>@loss_high OR
-            CH03<@loss_low OR CH03>@loss_high OR
-            CH04<@loss_low OR CH04>@loss_high OR
-            CH05<@loss_low OR CH05>@loss_high OR
-            CH06<@loss_low OR CH06>@loss_high OR
-            CH07<@loss_low OR CH07>@loss_high OR
-            CH08<@loss_low OR CH08>@loss_high
-    ) SET @fail_nonER = 1
+    IF @mean IS NULL OR @std IS NULL
+    BEGIN
+        --PRINT '找不到mean/std'
+        RETURN 2;
+    END;
 
-    -- Link Loss Range
-    IF EXISTS (SELECT 1 FROM @v WHERE Loss_range > @loss_range_high)
-        SET @fail_nonER = 1
+    SET @uec_upper = @mean + @std_multiplier * @std;
+    SET @uec_lower = @mean - @std_multiplier * @std;
 
-    -- OMPD 一致性
-    IF EXISTS (
-        SELECT 1 FROM @v
-        WHERE (
-            SELECT MAX(roc) FROM (VALUES
-                (OMPDM_CH01_OC-OMPDM_CH01_C/1000),(OMPDM_CH02_OC-OMPDM_CH02_C/1000),
-                (OMPDM_CH03_OC-OMPDM_CH03_C/1000),(OMPDM_CH04_OC-OMPDM_CH04_C/1000),
-                (OMPDM_CH05_OC-OMPDM_CH05_C/1000),(OMPDM_CH06_OC-OMPDM_CH06_C/1000),
-                (OMPDM_CH07_OC-OMPDM_CH07_C/1000),(OMPDM_CH08_OC-OMPDM_CH08_C/1000),
-                (OMPDS_CH01_OC-OMPDS_CH01_C/1000),(OMPDS_CH02_OC-OMPDS_CH02_C/1000),
-                (OMPDS_CH03_OC-OMPDS_CH03_C/1000),(OMPDS_CH04_OC-OMPDS_CH04_C/1000),
-                (OMPDS_CH05_OC-OMPDS_CH05_C/1000),(OMPDS_CH06_OC-OMPDS_CH06_C/1000),
-                (OMPDS_CH07_OC-OMPDS_CH07_C/1000),(OMPDS_CH08_OC-OMPDS_CH08_C/1000)
-            ) AS t(roc)
-        )
-        / NULLIF((
-            SELECT MIN(roc) FROM (VALUES
-                (OMPDM_CH01_OC-OMPDM_CH01_C/1000),(OMPDM_CH02_OC-OMPDM_CH02_C/1000),
-                (OMPDM_CH03_OC-OMPDM_CH03_C/1000),(OMPDM_CH04_OC-OMPDM_CH04_C/1000),
-                (OMPDM_CH05_OC-OMPDM_CH05_C/1000),(OMPDM_CH06_OC-OMPDM_CH06_C/1000),
-                (OMPDM_CH07_OC-OMPDM_CH07_C/1000),(OMPDM_CH08_OC-OMPDM_CH08_C/1000),
-                (OMPDS_CH01_OC-OMPDS_CH01_C/1000),(OMPDS_CH02_OC-OMPDS_CH02_C/1000),
-                (OMPDS_CH03_OC-OMPDS_CH03_C/1000),(OMPDS_CH04_OC-OMPDS_CH04_C/1000),
-                (OMPDS_CH05_OC-OMPDS_CH05_C/1000),(OMPDS_CH06_OC-OMPDS_CH06_C/1000),
-                (OMPDS_CH07_OC-OMPDS_CH07_C/1000),(OMPDS_CH08_OC-OMPDS_CH08_C/1000)
-            ) AS t(roc)
-        ), 0)
-        > POWER(10.0, @ompd_range_high / 10.0)
-    ) SET @fail_nonER = 1
-
-    -- MPDM vs MPDS 逐对偏差（前8 vs 后8，roc 已扣除暗电流）
-    IF EXISTS (
-        SELECT 1 FROM @v WHERE
-        ABS(10*LOG10(NULLIF(ABS(OMPDM_CH01_OC-OMPDM_CH01_C/1000),0)/NULLIF(ABS(OMPDS_CH01_OC-OMPDS_CH01_C/1000),0)))>@mpdm_mpds_dev OR
-        ABS(10*LOG10(NULLIF(ABS(OMPDM_CH02_OC-OMPDM_CH02_C/1000),0)/NULLIF(ABS(OMPDS_CH02_OC-OMPDS_CH02_C/1000),0)))>@mpdm_mpds_dev OR
-        ABS(10*LOG10(NULLIF(ABS(OMPDM_CH03_OC-OMPDM_CH03_C/1000),0)/NULLIF(ABS(OMPDS_CH03_OC-OMPDS_CH03_C/1000),0)))>@mpdm_mpds_dev OR
-        ABS(10*LOG10(NULLIF(ABS(OMPDM_CH04_OC-OMPDM_CH04_C/1000),0)/NULLIF(ABS(OMPDS_CH04_OC-OMPDS_CH04_C/1000),0)))>@mpdm_mpds_dev OR
-        ABS(10*LOG10(NULLIF(ABS(OMPDM_CH05_OC-OMPDM_CH05_C/1000),0)/NULLIF(ABS(OMPDS_CH05_OC-OMPDS_CH05_C/1000),0)))>@mpdm_mpds_dev OR
-        ABS(10*LOG10(NULLIF(ABS(OMPDM_CH06_OC-OMPDM_CH06_C/1000),0)/NULLIF(ABS(OMPDS_CH06_OC-OMPDS_CH06_C/1000),0)))>@mpdm_mpds_dev OR
-        ABS(10*LOG10(NULLIF(ABS(OMPDM_CH07_OC-OMPDM_CH07_C/1000),0)/NULLIF(ABS(OMPDS_CH07_OC-OMPDS_CH07_C/1000),0)))>@mpdm_mpds_dev OR
-        ABS(10*LOG10(NULLIF(ABS(OMPDM_CH08_OC-OMPDM_CH08_C/1000),0)/NULLIF(ABS(OMPDS_CH08_OC-OMPDS_CH08_C/1000),0)))>@mpdm_mpds_dev
-    ) SET @fail_nonER = 1
-
-    -- PPI
-    IF EXISTS (
-        SELECT 1 FROM @v WHERE
-            PPI_CH01<@ppi_low OR PPI_CH01>@ppi_high OR
-            PPI_CH02<@ppi_low OR PPI_CH02>@ppi_high OR
-            PPI_CH03<@ppi_low OR PPI_CH03>@ppi_high OR
-            PPI_CH04<@ppi_low OR PPI_CH04>@ppi_high OR
-            PPI_CH05<@ppi_low OR PPI_CH05>@ppi_high OR
-            PPI_CH06<@ppi_low OR PPI_CH06>@ppi_high OR
-            PPI_CH07<@ppi_low OR PPI_CH07>@ppi_high OR
-            PPI_CH08<@ppi_low OR PPI_CH08>@ppi_high
-    ) SET @fail_nonER = 1
-
-    -- Heater
-    IF EXISTS (
-        SELECT 1 FROM @v WHERE
-            HTU_CH01<@ht_low OR HTU_CH01>@ht_high OR
-            HTU_CH02<@ht_low OR HTU_CH02>@ht_high OR
-            HTU_CH03<@ht_low OR HTU_CH03>@ht_high OR
-            HTU_CH04<@ht_low OR HTU_CH04>@ht_high OR
-            HTU_CH05<@ht_low OR HTU_CH05>@ht_high OR
-            HTU_CH06<@ht_low OR HTU_CH06>@ht_high OR
-            HTU_CH07<@ht_low OR HTU_CH07>@ht_high OR
-            HTU_CH08<@ht_low OR HTU_CH08>@ht_high
-    ) SET @fail_nonER = 1
-
-    -- MPD Dark Current（impdNum=2，共 2+8+8=18 列，修复 OMPDS_CH08_C 漏检）
-    IF EXISTS (
-        SELECT 1 FROM @v WHERE
-            IMPD_CH01_C<@dc_low  OR IMPD_CH01_C>@dc_high  OR
-            IMPD_CH02_C<@dc_low  OR IMPD_CH02_C>@dc_high  OR
-            OMPDM_CH01_C<@dc_low OR OMPDM_CH01_C>@dc_high OR
-            OMPDM_CH02_C<@dc_low OR OMPDM_CH02_C>@dc_high OR
-            OMPDM_CH03_C<@dc_low OR OMPDM_CH03_C>@dc_high OR
-            OMPDM_CH04_C<@dc_low OR OMPDM_CH04_C>@dc_high OR
-            OMPDM_CH05_C<@dc_low OR OMPDM_CH05_C>@dc_high OR
-            OMPDM_CH06_C<@dc_low OR OMPDM_CH06_C>@dc_high OR
-            OMPDM_CH07_C<@dc_low OR OMPDM_CH07_C>@dc_high OR
-            OMPDM_CH08_C<@dc_low OR OMPDM_CH08_C>@dc_high OR
-            OMPDS_CH01_C<@dc_low OR OMPDS_CH01_C>@dc_high OR
-            OMPDS_CH02_C<@dc_low OR OMPDS_CH02_C>@dc_high OR
-            OMPDS_CH03_C<@dc_low OR OMPDS_CH03_C>@dc_high OR
-            OMPDS_CH04_C<@dc_low OR OMPDS_CH04_C>@dc_high OR
-            OMPDS_CH05_C<@dc_low OR OMPDS_CH05_C>@dc_high OR
-            OMPDS_CH06_C<@dc_low OR OMPDS_CH06_C>@dc_high OR
-            OMPDS_CH07_C<@dc_low OR OMPDS_CH07_C>@dc_high OR
-            OMPDS_CH08_C<@dc_low OR OMPDS_CH08_C>@dc_high   -- 补齐第18列
-    ) SET @fail_nonER = 1
-
-    -- MPD Loss
-    IF EXISTS (
-        SELECT 1 FROM @v WHERE
-            Onchip_loss_CH01_MPD<@mpd_loss_low OR Onchip_loss_CH01_MPD>@mpd_loss_high OR
-            Onchip_loss_CH02_MPD<@mpd_loss_low OR Onchip_loss_CH02_MPD>@mpd_loss_high OR
-            Onchip_loss_CH03_MPD<@mpd_loss_low OR Onchip_loss_CH03_MPD>@mpd_loss_high OR
-            Onchip_loss_CH04_MPD<@mpd_loss_low OR Onchip_loss_CH04_MPD>@mpd_loss_high OR
-            Onchip_loss_CH05_MPD<@mpd_loss_low OR Onchip_loss_CH05_MPD>@mpd_loss_high OR
-            Onchip_loss_CH06_MPD<@mpd_loss_low OR Onchip_loss_CH06_MPD>@mpd_loss_high OR
-            Onchip_loss_CH07_MPD<@mpd_loss_low OR Onchip_loss_CH07_MPD>@mpd_loss_high OR
-            Onchip_loss_CH08_MPD<@mpd_loss_low OR Onchip_loss_CH08_MPD>@mpd_loss_high
-    ) SET @fail_nonER = 1
-
-    -- MPD Loss Range
-    IF EXISTS (SELECT 1 FROM @v WHERE MPD_Loss_range > @mpd_loss_range)
-        SET @fail_nonER = 1
-
-    -- ER 单独判定
-    SELECT @min_ER = (
-        SELECT MIN(er) FROM (VALUES
-            (ER_CH01),(ER_CH02),(ER_CH03),(ER_CH04),
-            (ER_CH05),(ER_CH06),(ER_CH07),(ER_CH08)
-        ) AS t(er)
-    ) FROM @v
-
-    IF EXISTS (
-        SELECT 1 FROM @v WHERE
-            ER_CH01<@er_low OR ER_CH02<@er_low OR
-            ER_CH03<@er_low OR ER_CH04<@er_low OR
-            ER_CH05<@er_low OR ER_CH06<@er_low OR
-            ER_CH07<@er_low OR ER_CH08<@er_low
-    ) SET @fail_ER = 1
+    IF @uec_upper > @uec_high SET @uec_upper = @uec_high;
+    IF @uec_lower < @uec_low  SET @uec_lower = @uec_low;
 
     -- =============================================
-    -- Step 2：不在 failed device 内（全部 Pass）→ Bin 1
+    -- 5. 各项 Fail 判定
     -- =============================================
-    IF @fail_nonER = 0 AND @fail_ER = 0
+    DECLARE @fail INT = 0;
+    DECLARE @fail_ER INT = 0;
+    -- 5.1 UEC_Onchip
+    IF EXISTS
+    (
+        SELECT 1
+        FROM @v
+        WHERE UEC_Onchip < @uec_lower
+           OR UEC_Onchip > @uec_upper
+    )
+    BEGIN
+        --PRINT '5.1'
+        SET @fail = 1;
+    END;
+
+    -- 5.2 onchip_loss_optical：按 @ChannelNum 检查 CHxx
+    IF EXISTS
+    (
+        SELECT 1
+        FROM @v v
+        CROSS APPLY
+        (
+            SELECT 1 AS bad
+            FROM (VALUES
+                (1, v.CH01),
+                (2, v.CH02),
+                (3, v.CH03),
+                (4, v.CH04),
+                (5, v.CH05),
+                (6, v.CH06),
+                (7, v.CH07),
+                (8, v.CH08)
+            ) AS x(ch_no, loss_value)
+            WHERE x.ch_no <= @ChannelNum
+              AND (x.loss_value < @loss_low OR x.loss_value > @loss_high)
+        ) ca
+    )
+    BEGIN
+        --PRINT '5.2'
+        SET @fail = 1;
+    END;
+
+    -- 5.3 loss_range：<= @loss_range_high
+    IF EXISTS
+    (
+        SELECT 1
+        FROM @v
+        WHERE Loss_range > @loss_range_high
+    )
+    BEGIN
+        --PRINT '5.3'
+        SET @fail = 1;
+    END;
+
+    -- 5.4 onchip_loss_mpd：按 @ChannelNum 检查 CHxx
+    IF EXISTS
+    (
+        SELECT 1
+        FROM @v v
+        CROSS APPLY
+        (
+            SELECT 1 AS bad
+            FROM (VALUES
+                (1, v.Onchip_loss_CH01_MPD),
+                (2, v.Onchip_loss_CH02_MPD),
+                (3, v.Onchip_loss_CH03_MPD),
+                (4, v.Onchip_loss_CH04_MPD),
+                (5, v.Onchip_loss_CH05_MPD),
+                (6, v.Onchip_loss_CH06_MPD),
+                (7, v.Onchip_loss_CH07_MPD),
+                (8, v.Onchip_loss_CH08_MPD)
+            ) AS x(ch_no, loss_value)
+            WHERE x.ch_no <= @ChannelNum
+              AND (x.loss_value < @mpd_loss_low OR x.loss_value > @mpd_loss_high)
+        ) ca
+    )
+    BEGIN
+        --PRINT '5.4'
+        SET @fail = 1;
+    END;
+
+    -- 5.5 loss_mpd_range：<= @mpd_loss_range
+    IF EXISTS
+    (
+        SELECT 1
+        FROM @v
+        WHERE MPD_Loss_range > @mpd_loss_range
+    )
+    BEGIN
+        --PRINT '5.5'
+        SET @fail = 1;
+    END;
+
+    -- 5.6 mpd dark currents：
+    -- IMPD 按 @impdNum 检查；OMPDM/OMPDS 按 @ChannelNum 检查
+    IF EXISTS
+    (
+        SELECT 1
+        FROM @v v
+        CROSS APPLY
+        (
+            SELECT 1 AS bad
+            FROM (VALUES
+                ('IMPD' , 1, v.IMPD_CH01_C),
+                ('IMPD' , 2, v.IMPD_CH02_C),
+
+                ('OMPDM', 1, v.OMPDM_CH01_C),
+                ('OMPDM', 2, v.OMPDM_CH02_C),
+                ('OMPDM', 3, v.OMPDM_CH03_C),
+                ('OMPDM', 4, v.OMPDM_CH04_C),
+                ('OMPDM', 5, v.OMPDM_CH05_C),
+                ('OMPDM', 6, v.OMPDM_CH06_C),
+                ('OMPDM', 7, v.OMPDM_CH07_C),
+                ('OMPDM', 8, v.OMPDM_CH08_C),
+
+                ('OMPDS', 1, v.OMPDS_CH01_C),
+                ('OMPDS', 2, v.OMPDS_CH02_C),
+                ('OMPDS', 3, v.OMPDS_CH03_C),
+                ('OMPDS', 4, v.OMPDS_CH04_C),
+                ('OMPDS', 5, v.OMPDS_CH05_C),
+                ('OMPDS', 6, v.OMPDS_CH06_C),
+                ('OMPDS', 7, v.OMPDS_CH07_C),
+                ('OMPDS', 8, v.OMPDS_CH08_C)
+            ) AS x(src_type, ch_no, dc_value)
+            WHERE (
+                (x.src_type = 'IMPD' AND x.ch_no <= @impdNum)
+                OR
+                (x.src_type IN ('OMPDM', 'OMPDS') AND x.ch_no <= @ChannelNum)
+                )
+              AND (x.dc_value < @dc_low OR x.dc_value > @dc_high)
+        ) ca
+    )
+    BEGIN
+        --PRINT '5.6'
+        SET @fail = 1;
+    END;
+
+    -- 5.7 Heater Resistance：按 @ChannelNum 检查 HTU_CHxx
+    IF EXISTS
+    (
+        SELECT 1
+        FROM @v v
+        CROSS APPLY
+        (
+            SELECT 1 AS bad
+            FROM (VALUES
+                (1, v.HTU_CH01),
+                (2, v.HTU_CH02),
+                (3, v.HTU_CH03),
+                (4, v.HTU_CH04),
+                (5, v.HTU_CH05),
+                (6, v.HTU_CH06),
+                (7, v.HTU_CH07),
+                (8, v.HTU_CH08)
+            ) AS x(ch_no, ht_value)
+            WHERE x.ch_no <= @ChannelNum
+              AND (x.ht_value < @ht_low OR x.ht_value > @ht_high)
+        ) ca
+    )
+    BEGIN
+        --PRINT '5.7'
+        SET @fail = 1;
+    END;
+
+    -- 5.8 PPI：按 @ChannelNum 检查 PPI_CHxx
+    IF EXISTS
+    (
+        SELECT 1
+        FROM @v v
+        CROSS APPLY
+        (
+            SELECT 1 AS bad
+            FROM (VALUES
+                (1, v.PPI_CH01),
+                (2, v.PPI_CH02),
+                (3, v.PPI_CH03),
+                (4, v.PPI_CH04),
+                (5, v.PPI_CH05),
+                (6, v.PPI_CH06),
+                (7, v.PPI_CH07),
+                (8, v.PPI_CH08)
+            ) AS x(ch_no, ppi_value)
+            WHERE x.ch_no <= @ChannelNum
+              AND (x.ppi_value < @ppi_low OR x.ppi_value > @ppi_high)
+        ) ca
+    )
+    BEGIN
+        --PRINT '5.8'
+        SET @fail = 1;
+    END;
+
+    -- 5.9 ompd_range：max(db) - min(db) <= @ompd_range_high
+    IF EXISTS
+    (
+        SELECT 1
+        FROM @v v
+        CROSS APPLY
+        (
+            SELECT
+                MAX(x.db_value) AS max_db,
+                MIN(x.db_value) AS min_db
+            FROM (VALUES
+                (1, v.OMPDM_CH01_db),
+                (2, v.OMPDM_CH02_db),
+                (3, v.OMPDM_CH03_db),
+                (4, v.OMPDM_CH04_db),
+                (5, v.OMPDM_CH05_db),
+                (6, v.OMPDM_CH06_db),
+                (7, v.OMPDM_CH07_db),
+                (8, v.OMPDM_CH08_db),
+                (1, v.OMPDS_CH01_db),
+                (2, v.OMPDS_CH02_db),
+                (3, v.OMPDS_CH03_db),
+                (4, v.OMPDS_CH04_db),
+                (5, v.OMPDS_CH05_db),
+                (6, v.OMPDS_CH06_db),
+                (7, v.OMPDS_CH07_db),
+                (8, v.OMPDS_CH08_db)
+            ) AS x(ch_no, db_value)
+            WHERE x.ch_no <= @ChannelNum
+        ) ca
+        WHERE ca.max_db - ca.min_db > @ompd_range_high
+    )
+    BEGIN
+        --PRINT '5.9'
+        SET @fail = 1;
+    END;
+
+    -- 5.10 mpdm_mpds_dev：ABS(OMPDM_CHxx_db - OMPDS_CHxx_db) <= @mpdm_mpds_dev
+    IF EXISTS
+    (
+        SELECT 1
+        FROM @v v
+        CROSS APPLY
+        (
+            SELECT 1 AS bad
+            FROM (VALUES
+                (1, ABS(v.OMPDM_CH01_db - v.OMPDS_CH01_db)),
+                (2, ABS(v.OMPDM_CH02_db - v.OMPDS_CH02_db)),
+                (3, ABS(v.OMPDM_CH03_db - v.OMPDS_CH03_db)),
+                (4, ABS(v.OMPDM_CH04_db - v.OMPDS_CH04_db)),
+                (5, ABS(v.OMPDM_CH05_db - v.OMPDS_CH05_db)),
+                (6, ABS(v.OMPDM_CH06_db - v.OMPDS_CH06_db)),
+                (7, ABS(v.OMPDM_CH07_db - v.OMPDS_CH07_db)),
+                (8, ABS(v.OMPDM_CH08_db - v.OMPDS_CH08_db))
+            ) AS x(ch_no, dev_value)
+            WHERE x.ch_no <= @ChannelNum
+              AND x.dev_value > @mpdm_mpds_dev
+        ) ca
+    )
+    BEGIN
+        --PRINT '5.10'
+        SET @fail = 1;
+    END;
+
+    -- 5.11 ER：>= @er_low
+    DECLARE @min_ER FLOAT;
+    SELECT @min_ER = MIN(ca.er_value)
+    FROM @v v
+    CROSS APPLY
+    (
+        VALUES
+            (1, v.ER_CH01),
+            (2, v.ER_CH02),
+            (3, v.ER_CH03),
+            (4, v.ER_CH04),
+            (5, v.ER_CH05),
+            (6, v.ER_CH06),
+            (7, v.ER_CH07),
+            (8, v.ER_CH08)
+    ) ca(ch_no, er_value)
+    WHERE ca.ch_no <= @ChannelNum;
+
+    -- =============================================
+    -- 6. Bin 判定
+    -- =============================================
+    IF @fail = 0 AND @min_ER >= @er_low
     BEGIN
         RETURN 1  -- Pass → Bin 1，终止
     END
-
-    -- =============================================
-    -- Step 3：非ER全Pass 且命中 ER Bin7 → Bin 7
-    -- =============================================
-    IF @fail_nonER = 0 AND @min_ER > 23 AND @min_ER <= 24
+    IF @fail = 0 AND @ProductFamily='Coral6p0' AND @min_ER > 23 AND @min_ER <= 24
     BEGIN
         RETURN 7  -- Bin 7，终止
     END
-
-    -- =============================================
-    -- Step 4：非ER全Pass 且命中 ER Bin8 → Bin 8
-    -- =============================================
-    IF @fail_nonER = 0 AND @min_ER > 24 AND @min_ER <= @er_low
+    IF @fail = 0 AND @ProductFamily='Coral6p0' AND @min_ER > 24 AND @min_ER <= @er_low
     BEGIN
         RETURN 8  -- Bin 8，终止
     END
 
-    -- =============================================
-    -- Step 5：其余情况 → Bin 2
-    -- =============================================
     RETURN 2
 
 END

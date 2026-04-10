@@ -1,6 +1,6 @@
 ﻿CREATE TABLE [dbo].[AOI_Json_ST] (
     [ID]               INT            IDENTITY (1, 1) NOT NULL,
-    [ProductModel]     VARCHAR (8)    NULL,
+    [ProductModel]     VARCHAR (20)   NULL,
     [LotNo]            VARCHAR (7)    NULL,
     [Wafer]            VARCHAR (3)    NULL,
     [TrayNo]           VARCHAR (2)    NULL,
@@ -9,6 +9,8 @@
     [Cdt]              DATETIME       CONSTRAINT [DF_AOI_Json_ST_Cdt] DEFAULT (getdate()) NULL,
     CONSTRAINT [PK_AOI_Json_ST] PRIMARY KEY CLUSTERED ([ID] ASC)
 );
+
+
 
 
 
