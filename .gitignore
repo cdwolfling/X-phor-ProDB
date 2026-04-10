@@ -1,0 +1,79 @@
+# -----------------------------------------------------------------------
+# SQL Server Data Tools (SSDT) / Database project
+# -----------------------------------------------------------------------
+
+# Database model cache — local-only, regenerated automatically
+*.dbmdl
+
+# SQL Server Journal for Multiple File Merge
+*.jfm
+
+# Publish profiles may contain connection strings — keep them local
+*.publish.xml
+
+# -----------------------------------------------------------------------
+# Visual Studio
+# -----------------------------------------------------------------------
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+[Oo]bj/
+[Bb]in/
+
+# Visual Studio cache/options directory
+.vs/
+
+# Backup files created by Visual Studio
+*.vc.df
+*.vc.db
+
+# Resharper
+_ReSharper*/
+*.DotSettings.user
+
+# NCrunch
+*.ncrunch*
+.*crunch*.local.xml
+
+# -----------------------------------------------------------------------
+# Windows
+# -----------------------------------------------------------------------
+
+# Thumbnail cache
+Thumbs.db
+ehthumbs.db
+
+# Desktop.ini
+Desktop.ini
+
+# Recycle Bin
+$RECYCLE.BIN/
+
+# Windows shortcuts
+*.lnk
+
+# -----------------------------------------------------------------------
+# macOS
+# -----------------------------------------------------------------------
+
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# -----------------------------------------------------------------------
+# Miscellaneous
+# -----------------------------------------------------------------------
+
+# Editor directories and files
+.idea/
+*.swp
+*.swo
+*~
