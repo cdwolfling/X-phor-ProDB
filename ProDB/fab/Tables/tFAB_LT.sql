@@ -1,9 +1,12 @@
 ﻿CREATE TABLE [fab].[tFAB_LT] (
-    [ID]       INT          NULL,
+    [ID]       INT          IDENTITY (1, 1) NOT NULL,
     [FabName]  VARCHAR (10) NULL,
     [Layer]    INT          NULL,
-    [LeadTime] INT          NULL
+    [LeadTime] INT          NULL,
+    CONSTRAINT [PK_tFAB_LT] PRIMARY KEY CLUSTERED ([ID] ASC)
 );
+
+
 
 
 GO

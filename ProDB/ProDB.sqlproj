@@ -216,6 +216,8 @@
     <Build Include="fab\Functions\ufn_Get_Layer_ExpertedLT.sql" />
     <Build Include="fab\Stored Procedures\uspReport_FabWIP.sql" />
     <Build Include="Security\fab.sql" />
+    <Build Include="fab\Stored Procedures\uspReport_FabLeadTime.sql" />
+    <Build Include="fab\Stored Procedures\uspReport_FabLayerLT.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Project2DEV.scmp" />

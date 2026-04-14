@@ -58,7 +58,10 @@ BEGIN
 
 	if @QueryType='All'
 	begin
-		select * from #Lot
+		select l.SeqID, l.LotID, l.LotType, l.FAB, l.StartDate, l.Qty
+			, l.Last_CurrentLayer, l.CurrentLayer_FirstDay, l.CurrentLayer_RunningDay, l.CurrentLayer_LT, l.CurrentLayer_OverLTDays
+			, l.Layer_ExpertedLT, l.Layer_ActureLT, l.OverLTDays
+			from #Lot l
 	end
 	else if @QueryType='Warning'
 	begin
@@ -68,7 +71,10 @@ BEGIN
 			FAB                    VARCHAR(50),
 			OverLTWarningThreshold INT
 		)
-		insert #WarningThreshold(FAB,OverLTWarningThreshold) values ('Fab3', 24),('Fab9',24),('Fab2',20)
+		insert #WarningThreshold(FAB,OverLTWarningThreshold) values
+			 ('Fab3', fab.[ufn_Get_Layer_ExpertedLT]('Fab3',30)*0.1)
+			,('Fab9', fab.[ufn_Get_Layer_ExpertedLT]('Fab9',30)*0.1)
+			,('Fab2', fab.[ufn_Get_Layer_ExpertedLT]('Fab2',30)*0.1)
 		select l.SeqID, l.LotID, l.LotType, l.FAB, l.StartDate, l.Qty
 			, l.Last_CurrentLayer, l.CurrentLayer_FirstDay, l.CurrentLayer_RunningDay, l.CurrentLayer_LT, l.CurrentLayer_OverLTDays
 			, l.Layer_ExpertedLT, l.Layer_ActureLT, l.OverLTDays

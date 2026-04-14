@@ -14,6 +14,8 @@
 );
 
 
+
+
 GO
 GRANT VIEW DEFINITION
     ON OBJECT::[fab].[tFabWIP] TO [Production]
@@ -48,4 +50,9 @@ GO
 GRANT ALTER
     ON OBJECT::[fab].[tFabWIP] TO [Production]
     AS [dbo];
+
+
+GO
+CREATE UNIQUE NONCLUSTERED INDEX [IX_tFabWIP_LotID_DateFlag]
+    ON [fab].[tFabWIP]([LotID] ASC, [DateFalg] ASC);
 
