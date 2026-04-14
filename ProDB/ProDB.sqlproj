@@ -70,6 +70,10 @@
     <Folder Include="spec\" />
     <Folder Include="spec\Tables\" />
     <Folder Include="spec\Views\" />
+    <Folder Include="fab\" />
+    <Folder Include="fab\Tables\" />
+    <Folder Include="fab\Functions\" />
+    <Folder Include="fab\Stored Procedures\" />
   </ItemGroup>
   <ItemGroup>
     <Build Include="dbo\Tables\Shipping_list.sql" />
@@ -206,6 +210,12 @@
     <Build Include="dbo\Functions\ufn_GetChipBin_FromCPData_Coral6p0.sql" />
     <Build Include="dbo\Functions\ufn_GetChipBin_FromCPData_Coral3p1.sql" />
     <Build Include="dbo\Stored Procedures\uspSync_LotWafer_UEC_Mean_Std.sql" />
+    <Build Include="dbo\Tables\TestTime_Record_History.sql" />
+    <Build Include="fab\Tables\tFabWIP.sql" />
+    <Build Include="fab\Tables\tFAB_LT.sql" />
+    <Build Include="fab\Functions\ufn_Get_Layer_ExpertedLT.sql" />
+    <Build Include="fab\Stored Procedures\uspReport_FabWIP.sql" />
+    <Build Include="Security\fab.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Project2DEV.scmp" />

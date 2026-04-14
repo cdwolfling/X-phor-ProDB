@@ -1,0 +1,3 @@
+﻿CREATE SCHEMA [fab]
+    AUTHORIZATION [dbo];
+

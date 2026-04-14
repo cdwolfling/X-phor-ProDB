@@ -7,8 +7,11 @@
     [TestEndTime]   DATETIME     NULL,
     [Operator]      VARCHAR (10) NULL,
     [Cdt]           DATETIME     CONSTRAINT [DF_TestTime_Record_Cdt] DEFAULT (getdate()) NULL,
+    [Udt]           DATETIME     CONSTRAINT [DF_TestTime_Record_Udt] DEFAULT (getdate()) NULL,
     CONSTRAINT [PK_TestTime_Record] PRIMARY KEY CLUSTERED ([ID] ASC)
 );
+
+
 
 
 

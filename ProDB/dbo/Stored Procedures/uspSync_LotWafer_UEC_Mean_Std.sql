@@ -9,7 +9,7 @@
 Change Log:
 -- =============================================
 */
-CREATE   PROCEDURE dbo.uspSync_LotWafer_UEC_Mean_Std
+CREATE   PROCEDURE [dbo].[uspSync_LotWafer_UEC_Mean_Std]
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -33,7 +33,7 @@ BEGIN
         ON cp.LotWafer = u.LotWafer
        AND cp.FileModifiedTime = u.CPFileTime
     OUTER APPLY dbo.ufn_GetUEC_Mean_Std(cp.LotWafer) ms
-    WHERE cp.FileModifiedTime >= DATEADD(DAY, -30, @Now)
+    WHERE cp.FileModifiedTime >= DATEADD(DAY, -40, @Now)
       AND cp.isRecent = 1
       AND cp.FileModifiedTime <= DATEADD(MINUTE, -5, @Now)
       AND u.LotWafer IS NULL;
