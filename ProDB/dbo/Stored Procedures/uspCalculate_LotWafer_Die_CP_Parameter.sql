@@ -4,16 +4,20 @@
 -- Create date: 2026-04-16
 -- Description: 计算 LotWafer + ChipSN 的, 检查Spec会用到的， 18 项 计算结果 到 dbo.LotWafer_Die_CP_Parameter
 -- Notes:       数据来源 LotWafer_UEC_Mean_Std (FinishDieParameter=0)
+exec [dbo].[uspCalculate_LotWafer_Die_CP_Parameter] @LotWafer = 'LE74796-W18'
 
 Change Log:
 -- =============================================
 */
-CREATE   PROCEDURE [dbo].[uspCalculate_LotWafer_Die_CP_Parameter](
+CREATE     PROCEDURE [dbo].[uspCalculate_LotWafer_Die_CP_Parameter](
 @LotWafer varchar(20)
 )
 AS
 BEGIN
     SET NOCOUNT ON;
+
+    --Test
+    --Declare @LotWafer varchar(20) = 'LE74796-W18'
     IF NOT EXISTS(SELECT * FROM dbo.LotWafer_UEC_Mean_Std s
         WHERE s.LotWafer = @LotWafer AND s.FinishDieParameter = 0)
         RETURN
@@ -37,7 +41,7 @@ BEGIN
     IF OBJECT_ID('tempdb..#CalculateResult') IS NOT NULL DROP TABLE #CalculateResult;
     CREATE TABLE #CalculateResult
     (
-        LotWafer                 VARCHAR(50) NOT NULL PRIMARY KEY,
+        LotWafer                 VARCHAR(50) NOT NULL,
         ChipSN                  VARCHAR(50) NOT NULL,
         dark_current_low         FLOAT NULL,
         dark_current_high        FLOAT NULL,
@@ -61,46 +65,45 @@ BEGIN
 
     INSERT INTO #CalculateResult
     (
-        LotWafer
+        LotWafer, ChipSN
         , dark_current_low
         , dark_current_high
         , uec_onchip_low
         , uec_conchip_high
         , onchip_loss_optical_low
         , onchip_loss_optical_high
-        --, heater_resistance_low
-        --, heater_resistance_high
-        --, ppi_low
-        --, ppi_high
-        --, onchip_loss_mpd_low
-        --, onchip_loss_mpd_high
+        , heater_resistance_low
+        , heater_resistance_high
+        , ppi_low
+        , ppi_high
+        , onchip_loss_mpd_low
+        , onchip_loss_mpd_high
         , ER_low
         , loss_range_high
         , mpd_loss_range_high
-        --, ompd_range_high
+        , ompd_range_high
         , mpdm_mpds_dev
-        --, uec_onchip_std
+        , uec_onchip_std
     )
-    SELECT
-        cp.LotWafer
+    SELECT cp.LotWafer, cp.ChipSN
         , ca.MinDc
         , ca.MaxDc
         , cp.UEC_Onchip
         , cp.UEC_Onchip
         , cc.MinCH
         , cc.MaxCH
-        --, heater_resistance_low
-        --, heater_resistance_high
-        --, ppi_low
-        --, ppi_high
-        --, onchip_loss_mpd_low
-        --, onchip_loss_mpd_high
+        , cd.MinHTU
+        , cd.MaxHTU
+        , ce.MinPPI
+        , ce.MaxPPI
+        , cf.MinMPDLoss
+        , cf.MaxMPDLoss
         , cg.MinER
         , cp.Loss_range
         , cp.MPD_Loss_range
-        --, ompd_range_high  --ch
+        , ch.OmpdRange
         , ci.MaxDev
-        --, uec_onchip_std  --cj
+        , ABS(cp.UEC_Onchip - @Mean)/@Std
     FROM dbo.vw_CPTestData cp
     CROSS APPLY
     (
@@ -153,6 +156,57 @@ BEGIN
     CROSS APPLY
     (
         SELECT
+            CASE WHEN COUNT(*) <> COUNT(x.Val) THEN NULL ELSE MIN(x.Val) END AS MinHTU,
+            CASE WHEN COUNT(*) <> COUNT(x.Val) THEN NULL ELSE MAX(x.Val) END AS MaxHTU
+        FROM (VALUES
+            (1, cp.HTU_CH01),
+            (2, cp.HTU_CH02),
+            (3, cp.HTU_CH03),
+            (4, cp.HTU_CH04),
+            (5, cp.HTU_CH05),
+            (6, cp.HTU_CH06),
+            (7, cp.HTU_CH07),
+            (8, cp.HTU_CH08)
+        ) AS x(ch_no, Val)
+        WHERE x.ch_no <= @ChannelNum
+    ) cd
+    CROSS APPLY
+    (
+        SELECT
+            CASE WHEN COUNT(*) <> COUNT(x.Val) THEN NULL ELSE MIN(x.Val) END AS MinPPI,
+            CASE WHEN COUNT(*) <> COUNT(x.Val) THEN NULL ELSE MAX(x.Val) END AS MaxPPI
+        FROM (VALUES
+            (1, cp.PPI_CH01),
+            (2, cp.PPI_CH02),
+            (3, cp.PPI_CH03),
+            (4, cp.PPI_CH04),
+            (5, cp.PPI_CH05),
+            (6, cp.PPI_CH06),
+            (7, cp.PPI_CH07),
+            (8, cp.PPI_CH08)
+        ) AS x(ch_no, Val)
+        WHERE x.ch_no <= @ChannelNum
+    ) ce
+    CROSS APPLY
+    (
+        SELECT
+            CASE WHEN COUNT(*) <> COUNT(x.Val) THEN NULL ELSE MIN(x.Val) END AS MinMPDLoss,
+            CASE WHEN COUNT(*) <> COUNT(x.Val) THEN NULL ELSE MAX(x.Val) END AS MaxMPDLoss
+        FROM (VALUES
+            (1, cp.Onchip_loss_CH01_MPD),
+            (2, cp.Onchip_loss_CH02_MPD),
+            (3, cp.Onchip_loss_CH03_MPD),
+            (4, cp.Onchip_loss_CH04_MPD),
+            (5, cp.Onchip_loss_CH05_MPD),
+            (6, cp.Onchip_loss_CH06_MPD),
+            (7, cp.Onchip_loss_CH07_MPD),
+            (8, cp.Onchip_loss_CH08_MPD)
+        ) AS x(ch_no, Val)
+        WHERE x.ch_no <= @ChannelNum
+    ) cf
+    CROSS APPLY
+    (
+        SELECT
             CASE WHEN COUNT(*) <> COUNT(x.Val) THEN NULL ELSE MIN(x.Val) END AS MinER
         FROM (VALUES
             (1, cp.ER_CH01),
@@ -166,6 +220,30 @@ BEGIN
         ) AS x(ch_no, Val)
         WHERE x.ch_no <= @ChannelNum
     ) cg
+    CROSS APPLY
+    (
+        SELECT
+            CASE WHEN COUNT(*) <> COUNT(x.Val) THEN NULL ELSE MAX(x.Val) - MIN(x.Val) END AS OmpdRange
+        FROM (VALUES
+            (1, cp.OMPDM_CH01_db),
+            (2, cp.OMPDM_CH02_db),
+            (3, cp.OMPDM_CH03_db),
+            (4, cp.OMPDM_CH04_db),
+            (5, cp.OMPDM_CH05_db),
+            (6, cp.OMPDM_CH06_db),
+            (7, cp.OMPDM_CH07_db),
+            (8, cp.OMPDM_CH08_db),
+            (1, cp.OMPDS_CH01_db),
+            (2, cp.OMPDS_CH02_db),
+            (3, cp.OMPDS_CH03_db),
+            (4, cp.OMPDS_CH04_db),
+            (5, cp.OMPDS_CH05_db),
+            (6, cp.OMPDS_CH06_db),
+            (7, cp.OMPDS_CH07_db),
+            (8, cp.OMPDS_CH08_db)
+        ) AS x(ch_no, Val)
+        WHERE x.ch_no <= @ChannelNum
+    ) ch
     CROSS APPLY
     (
         SELECT
