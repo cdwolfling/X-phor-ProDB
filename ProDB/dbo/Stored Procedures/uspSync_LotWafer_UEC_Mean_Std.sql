@@ -7,6 +7,7 @@
 -- Notes:
 
 Change Log:
+2026-04-16 JC: set u.FinishDieParameter = 0, if update happened
 -- =============================================
 */
 CREATE   PROCEDURE [dbo].[uspSync_LotWafer_UEC_Mean_Std]
@@ -69,7 +70,8 @@ BEGIN
        SET u.CPFileTime = t.CPFileTime,
            u.Mean       = t.MeanValue,
            u.Std        = t.StdValue,
-           u.Udt        = @Now
+           u.Udt        = @Now,
+           u.FinishDieParameter        = 0
     FROM dbo.LotWafer_UEC_Mean_Std u
     JOIN #ToUpdate t
         ON u.LotWafer = t.LotWafer;

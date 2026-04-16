@@ -217,7 +217,9 @@
     <Build Include="fab\Stored Procedures\uspReport_FabWIP.sql" />
     <Build Include="Security\fab.sql" />
     <Build Include="fab\Stored Procedures\uspReport_FabLeadTime.sql" />
-    <Build Include="fab\Stored Procedures\uspReport_FabLayerLT.sql" />
+    <Build Include="dbo\Tables\LotWafer_UEC_Mean_Std_History.sql" />
+    <Build Include="dbo\Tables\LotWafer_Die_CP_Parameter.sql" />
+    <Build Include="fab\Stored Procedures\uspReport_FabLayerCycleTime.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Project2DEV.scmp" />

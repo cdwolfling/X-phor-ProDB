@@ -12,6 +12,7 @@ exec [dbo].[uspReport_TestDataForShipping_20260309] @Wafer='LN41683-W16', @ChipS
 exec [dbo].[uspReport_TestDataForShipping_20260309] @Wafer='TH00020-W04', @ChipSNList='H03-302,H03-303,I03-301'
 
 Change Log:
+2026-04-16 JC: 按SN查询时， 也输出Lot_Wafer_Box_ID
 2026-03-18 JC: If @Wafer and @ChipSNList are not blank, output test data for all SNs in @ChipSNList. Even if some SNs have no test data, blank test data should still be returned.
 =============================================
 */
@@ -67,7 +68,7 @@ BEGIN
 	if @Wafer<>''
 	begin
 		insert #ShippingChip_WithBoxSeq(ProductModel, Ship_date, Lot_Wafer_Box_ID, LotWafer, ChipSN, Ship_Qty, TrayLastSN, BoxSeq)
-			select h.ProductModel, s.Ship_date, s.Lot_Wafer_Box_ID, h.LotWafer, c.ChipSN, s.Ship_Qty, s.TrayLastSN, BoxSeq = ROW_NUMBER() OVER (PARTITION BY c.TrayMapId ORDER BY c.RowNo, c.ColNo)
+			select h.ProductModel, s.Ship_date, h.LotWaferTrayKey, h.LotWafer, c.ChipSN, s.Ship_Qty, s.TrayLastSN, BoxSeq = ROW_NUMBER() OVER (PARTITION BY c.TrayMapId ORDER BY c.RowNo, c.ColNo)
 			from dbo.TrayMapHeader h
 			join dbo.TrayMapCell c on h.TrayMapId=c.TrayMapId
 			left join dbo.Shipping_list s on h.LotWaferTrayKey=s.Lot_Wafer_Box_ID
@@ -82,8 +83,9 @@ BEGIN
 			Declare @ProductModel varchar(8)
 			select top 1 @ProductModel= left(w.SourceName,8) from dbo.Wafer w where w.Wafer号=@Wafer
 			insert #ShippingChip_WithBoxSeq(ProductModel, Ship_date, Lot_Wafer_Box_ID, LotWafer, ChipSN, Ship_Qty, TrayLastSN, BoxSeq)
-				select @ProductModel, Ship_date=NULL, Lot_Wafer_Box_ID=NULL, @Wafer,f.MyColumn, Ship_Qty=0, TrayLastSN=0, BoxSeq = 0
+				select @ProductModel, Ship_date=NULL, tray.LotWaferTrayKey, @Wafer,f.MyColumn, Ship_Qty=0, TrayLastSN=0, BoxSeq = 0
 					from dbo.ufnGetListFromSourceString(@ChipSNList,'/') f
+					left join dbo.vw_TrayMap tray on tray.LotWafer=@Wafer and convert(varchar(7),f.MyColumn)=tray.ChipSN
 					left join #ShippingChip_WithBoxSeq z on f.MyColumn=z.ChipSN
 					where f.MyColumn<>''
 					and z.ChipSN is null

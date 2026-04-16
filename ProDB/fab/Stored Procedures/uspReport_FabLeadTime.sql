@@ -1,4 +1,5 @@
-﻿/*
+﻿
+/*
 =============================================
 Author:		Jackie Chen
 Create date: 2026-04-14
@@ -7,9 +8,10 @@ Sample:
 exec [fab].[uspReport_FabLeadTime] @FAB = 'Fab3'
 
 Change Log:
+2026-04-15 JC: DateFalg-->DateFlag
 =============================================
 */
-CREATE     PROCEDURE [fab].[uspReport_FabLeadTime](
+CREATE   PROCEDURE [fab].[uspReport_FabLeadTime](
     @FAB varchar(50)='All'
     --,@LotType varchar(50)='All'
     --,@CustomerPart varchar(20)='All'
@@ -19,15 +21,15 @@ BEGIN
     SET NOCOUNT ON;
     if OBJECT_ID('tempdb..#LeadTime') is not null drop table #LeadTime
 
-    create table #LeadTime(FAB varchar(50),LotType varchar(50),CustomerPart varchar(50),LotID varchar(50)
+    create table #LeadTime(FAB varchar(50), StartDate datetime,LotType varchar(50),CustomerPart varchar(50),LotID varchar(50)
         ,CurrentLayer INT,LeadTime INT)
-    insert #LeadTime(FAB, LotType, CustomerPart, LotID, CurrentLayer, LeadTime)
-        select f.FAB,f.LotType,f.CustomerPart,f.LotID,f.CurrentLayer--,count(1) as countNum, min(f.DateFalg) as FirstD, max(f.DateFalg) as LastD
-	    ,datediff(dd,min(f.DateFalg),max(f.DateFalg))+1 as LeadTime
+    insert #LeadTime(FAB, StartDate, LotType, CustomerPart, LotID, CurrentLayer, LeadTime)
+        select f.FAB, f.StartDate,f.LotType,f.CustomerPart,f.LotID,f.CurrentLayer--,count(1) as countNum, min(f.DateFlag) as FirstD, max(f.DateFlag) as LastD
+	    ,datediff(dd,min(f.DateFlag),max(f.DateFlag))+1 as LeadTime
 	    from fab.tFabWIP f
-	    group by f.FAB,f.LotType,f.CustomerPart,f.LotID,f.CurrentLayer
+	    group by f.FAB, f.StartDate,f.LotType,f.CustomerPart,f.LotID,f.CurrentLayer
     
-    select z.FAB, z.LotType, z.CustomerPart, z.LotID, z.CurrentLayer as Layer, z.LeadTime
+    select z.FAB, z.StartDate, z.LotType, z.CustomerPart, z.LotID, z.CurrentLayer as Layer, z.LeadTime
         FROM #LeadTime z
         where z.FAB=@FAB or @FAB='All'
 
