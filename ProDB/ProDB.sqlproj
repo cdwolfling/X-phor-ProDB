@@ -220,6 +220,7 @@
     <Build Include="dbo\Tables\LotWafer_UEC_Mean_Std_History.sql" />
     <Build Include="dbo\Tables\LotWafer_Die_CP_Parameter.sql" />
     <Build Include="fab\Stored Procedures\uspReport_FabLayerCycleTime.sql" />
+    <Build Include="dbo\Stored Procedures\uspCalculate_LotWafer_Die_CP_Parameter.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Project2DEV.scmp" />
