@@ -27,12 +27,14 @@ BEGIN
     SELECT @ProductFamily = LEFT(w.SourceName, 8)
         FROM dbo.Wafer w
         WHERE w.Wafer号 = @LotWafer;
-    SELECT @ChannelNum    = CASE WHEN LEFT(@ProductFamily, 8) IN ('Coral3p1','Coral3p1-A3','Coral3p5') THEN 4
-                               WHEN LEFT(@ProductFamily, 8) IN ('Coral4p1','Coral6p0','Coral6p3') THEN 8
+    SELECT @ChannelNum    = CASE WHEN LEFT(@ProductFamily, 8) IN ('Coral3p1','Coral3p5','CORAL5P3') THEN 4
+                               WHEN LEFT(@ProductFamily, 8) IN ('Coral4p1','Coral6p0','Coral6p3','Coral4p5') THEN 8
                           END,
-        @impdNum       = CASE WHEN LEFT(@ProductFamily, 8) IN ('Coral3p1','Coral3p1-A3','Coral3p5') THEN 1
-                               WHEN LEFT(@ProductFamily, 8) IN ('Coral4p1','Coral6p0','Coral6p3') THEN 2
+        @impdNum       = CASE WHEN LEFT(@ProductFamily, 8) IN ('Coral3p1','Coral3p5','CORAL5P3') THEN 1
+                               WHEN LEFT(@ProductFamily, 8) IN ('Coral4p1','Coral6p0','Coral6p3','Coral4p5') THEN 2
                           END
+    IF @ChannelNum IS NULL
+        RETURN
 
     DECLARE @CPFileTime DATETIME, @Mean FLOAT, @Std FLOAT
     SELECT @CPFileTime = l.CPFileTime, @Mean = l.Mean, @Std = l.Std

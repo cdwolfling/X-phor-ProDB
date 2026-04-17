@@ -22,8 +22,11 @@
     [POLine]       INT          NULL,
     [DateFlag]     DATE         NULL,
     [Cdt]          DATETIME     CONSTRAINT [DF_tFabWIP_Cdt] DEFAULT (getdate()) NOT NULL,
+    [BaseLot]      VARCHAR (50) NULL,
     CONSTRAINT [PK_tFabWIP] PRIMARY KEY CLUSTERED ([ID] ASC)
 );
+
+
 
 
 

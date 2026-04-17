@@ -5,15 +5,15 @@
 -- Create date: 2026-01-30
 -- Description:	产生ShippingData
 -- Notes:
-exec [dbo].[uspReport_BinmapCheck_For_Shipping] @ProductFamily='Coral6p0', @Ship_date='2026-04-07', @Customer_Code='SZ04000'
-exec [dbo].[uspReport_BinmapCheck_For_Shipping] @ProductFamily='Coral6p0', @Ship_date='2026-04-07', @Customer_Code='QD01000'
+exec [dbo].[uspReport_BinmapCheck_For_Shipping2] @ProductFamily='Coral6p0', @Ship_date='2026-04-07', @Customer_Code='SZ04000'
+exec [dbo].[uspReport_BinmapCheck_For_Shipping2] @ProductFamily='Coral6p0', @Ship_date='2026-04-07', @Customer_Code='QD01000'
 
 Change Log:
 2026-04-17 JC: Performance improved.
 2026-04-09 JC: Replace ufn_GetChipBin_FromCPData with ufn_GetChipBin_FromCPData_Coral6p0
 -- =============================================
 */
-CREATE     PROCEDURE [dbo].[uspReport_BinmapCheck_For_Shipping]
+CREATE     PROCEDURE [dbo].[uspReport_BinmapCheck_For_Shipping2]
 (
 @ProductFamily varchar(10)='Coral6p0',
 @Ship_date date,
@@ -45,7 +45,7 @@ BEGIN
         and s.Project in (@ProductFamily,@ProductFamily_B)
     create clustered index IX_ToCheckDie on #ShippingUnit(LotWafer, ChipSN, ProductFamily)
 	
-    -- 1. Update ShippingBin for Coral6p0 Bin7Issue
+    -- 1. Update ShippingBin
     --ReworkBatch 1
     update d set d.ShippingBin=v3.Bin from #ShippingUnit d
         join dbo.Z_Die_Bin7Case_Coral6p0_33Wafer_BinmapV3 v3 on v3.LotWafer=d.LotWafer and v3.Cbin=d.ChipSN

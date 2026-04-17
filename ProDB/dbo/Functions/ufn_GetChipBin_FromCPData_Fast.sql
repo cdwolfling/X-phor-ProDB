@@ -12,6 +12,7 @@ select *, dbo.ufn_GetChipBin_FromCPData_Fast(w82.LotWafer,w82.Cbin) as MES_Bin f
     where w82.Bin=7 and w82.Bin_V3<>dbo.ufn_GetChipBin_FromCPData_Fast(w82.LotWafer,w82.Cbin)
 
 Change Log:
+2026-04-17 JC: Bugfix.
 2026-04-16 JC: 基于ufn_GetChipBin_FromCPData修改而来， 使用dbo.LotWafer_Die_CP_Parameter提高效率
 2026-04-10 JC: bugfix, 修正取@mean @std的逻辑
 2026-04-09 JC: 改用[dbo].[ufn_GetChipBin_FromCPData_Fast_Coral3p1]的判断方式; 增加Debug信息
@@ -28,23 +29,12 @@ RETURNS INT
 AS
 BEGIN
     DECLARE @Bin INT = 2;  -- 默认 Bin2（兜底）
-    DECLARE @ChannelNum INT, @impdNum INT
 
     -- =============================================
     -- 1. Spec 参数（替换为从配置表动态读取）
     -- =============================================
     DECLARE @ProductFamily      VARCHAR(50)
     SELECT @ProductFamily=left(w.SourceName,8) from dbo.Wafer w where w.Wafer号=@LotWafer
-    SELECT @ChannelNum = case when @ProductFamily in ('Coral3p1','Coral3p5') then 4
-                            when @ProductFamily in ('Coral4p1','Coral6p0') then 8
-                        end
-    SELECT @impdNum = case when @ProductFamily in ('Coral3p1','Coral3p5') then 1
-                            when @ProductFamily in ('Coral4p1','Coral6p0') then 2
-                        end
-    IF @ChannelNum is null
-    BEGIN
-        RETURN -1
-    END;
     
     DECLARE @uec_low            FLOAT
     DECLARE @uec_high           FLOAT
@@ -83,7 +73,12 @@ BEGIN
     DECLARE @spec_mpd_loss_low       FLOAT
     DECLARE @spec_mpd_loss_high      FLOAT
     DECLARE @spec_mpd_loss_range     FLOAT
-    
+
+    IF NOT EXISTS (SELECT 1 FROM dbo.LotWafer_Die_CP_Parameter p WHERE p.LotWafer = @LotWafer AND p.ChipSN = @ChipSN)
+    BEGIN
+        RETURN 0
+    END
+
     SELECT
         @uec_low         = p.uec_onchip_low,
         @uec_high        = p.uec_conchip_high,
@@ -132,27 +127,36 @@ BEGIN
     -- =============================================
     -- 6. Bin 判定
     -- =============================================
-    IF @uec_low>@spec_uec_low AND @uec_high<@spec_uec_high AND @std_multiplier<@spec_std_multiplier AND @loss_low>@spec_loss_low AND @loss_high<@spec_loss_high AND @loss_range_high<@spec_loss_range_high AND @ompd_range_high<@spec_ompd_range_high
-        AND @mpdm_mpds_dev<@spec_mpdm_mpds_dev AND @er_low>@spec_er_low AND @ppi_high<@spec_ppi_high AND @ht_low>@spec_ht_low AND @ht_high<@spec_ht_high
-        AND @dc_low>@spec_dc_low AND @dc_high<@spec_dc_high AND @mpd_loss_low>@spec_mpd_loss_low AND @mpd_loss_high<@spec_mpd_loss_high AND @mpd_loss_range<@spec_mpd_loss_range
-        AND @er_low >= @er_low
+    DECLARE @BasePass bit = 0;
+    IF @uec_low>@spec_uec_low
+       AND @uec_high<@spec_uec_high
+       AND @std_multiplier<@spec_std_multiplier
+       AND @loss_low>@spec_loss_low
+       AND @loss_high<@spec_loss_high
+       AND @loss_range_high<@spec_loss_range_high
+       AND @ompd_range_high<@spec_ompd_range_high
+       AND @mpdm_mpds_dev<@spec_mpdm_mpds_dev
+       AND @ppi_low>@spec_ppi_low
+       AND @ppi_high<@spec_ppi_high
+       AND @ht_low>@spec_ht_low
+       AND @ht_high<@spec_ht_high
+       AND @dc_low>@spec_dc_low
+       AND @dc_high<@spec_dc_high
+       AND @mpd_loss_low>@spec_mpd_loss_low
+       AND @mpd_loss_high<@spec_mpd_loss_high
+       AND @mpd_loss_range<@spec_mpd_loss_range
     BEGIN
-        RETURN 1  -- Pass → Bin 1，终止
+        SET @BasePass = 1
     END
-    ELSE IF @uec_low>@spec_uec_low AND @uec_high<@spec_uec_high AND @std_multiplier<@spec_std_multiplier AND @loss_low>@spec_loss_low AND @loss_high<@spec_loss_high AND @loss_range_high<@spec_loss_range_high AND @ompd_range_high<@spec_ompd_range_high
-        AND @mpdm_mpds_dev<@spec_mpdm_mpds_dev AND @er_low>@spec_er_low AND @ppi_high<@spec_ppi_high AND @ht_low>@spec_ht_low AND @ht_high<@spec_ht_high
-        AND @dc_low>@spec_dc_low AND @dc_high<@spec_dc_high AND @mpd_loss_low>@spec_mpd_loss_low AND @mpd_loss_high<@spec_mpd_loss_high AND @mpd_loss_range<@spec_mpd_loss_range
-        AND @ProductFamily='Coral6p0' AND @er_low > 23 AND @er_low <= 24
-    BEGIN
-        RETURN 7  -- Bin 7，终止
-    END
-    ELSE IF @uec_low>@spec_uec_low AND @uec_high<@spec_uec_high AND @std_multiplier<@spec_std_multiplier AND @loss_low>@spec_loss_low AND @loss_high<@spec_loss_high AND @loss_range_high<@spec_loss_range_high AND @ompd_range_high<@spec_ompd_range_high
-        AND @mpdm_mpds_dev<@spec_mpdm_mpds_dev AND @er_low>@spec_er_low AND @ppi_high<@spec_ppi_high AND @ht_low>@spec_ht_low AND @ht_high<@spec_ht_high
-        AND @dc_low>@spec_dc_low AND @dc_high<@spec_dc_high AND @mpd_loss_low>@spec_mpd_loss_low AND @mpd_loss_high<@spec_mpd_loss_high AND @mpd_loss_range<@spec_mpd_loss_range
-        AND @ProductFamily='Coral6p0' AND @er_low > 24 AND @er_low <= @er_low
-    BEGIN
-        RETURN 8  -- Bin 8，终止
-    END
+
+    IF @BasePass = 1 AND @ProductFamily='Coral6p0' AND @er_low > 23 AND @er_low <= 24
+        RETURN 7
+
+    IF @BasePass = 1 AND @ProductFamily='Coral6p0' AND @er_low > 24 AND @er_low < @spec_er_low
+        RETURN 8
+
+    IF @BasePass = 1 AND @er_low >= @spec_er_low
+        RETURN 1
 
     RETURN 2
 

@@ -12,6 +12,7 @@ select *, dbo.ufn_GetChipBin_FromCPData(w82.LotWafer,w82.Cbin) as MES_Bin from d
     where w82.Bin=7 and w82.Bin_V3<>dbo.ufn_GetChipBin_FromCPData(w82.LotWafer,w82.Cbin)
 
 Change Log:
+2026-04-17 JC: 优化Debug方式
 2026-04-10 JC: bugfix, 修正取@mean @std的逻辑
 2026-04-09 JC: 改用[dbo].[ufn_GetChipBin_FromCPData_Coral3p1]的判断方式; 增加Debug信息
 2026-04-09 JC: 无测试结果， 返回0； 无部分测试项， 返回2
@@ -26,6 +27,9 @@ CREATE FUNCTION [dbo].[ufn_GetChipBin_FromCPData]
 RETURNS INT
 AS
 BEGIN
+    --declare @LotWafer VARCHAR(50)='LN47756-W06'
+    --declare @ChipSN   VARCHAR(50)='A04-104'
+
     DECLARE @Bin INT = 2;  -- 默认 Bin2（兜底）
     DECLARE @ChannelNum INT, @impdNum INT
 

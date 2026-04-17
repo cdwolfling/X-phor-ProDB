@@ -222,6 +222,8 @@
     <Build Include="fab\Stored Procedures\uspReport_FabLayerCycleTime.sql" />
     <Build Include="dbo\Stored Procedures\uspCalculate_LotWafer_Die_CP_Parameter.sql" />
     <Build Include="dbo\Functions\ufn_GetChipBin_FromCPData_Fast.sql" />
+    <Build Include="dbo\Stored Procedures\uspReport_BinmapCheck_For_Shipping2.sql" />
+    <Build Include="dbo\Stored Procedures\uspCalculate_LotWafer_Die_CP_Parameter_Job.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Project2DEV.scmp" />

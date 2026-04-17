@@ -7,9 +7,11 @@
     [Remark]              NVARCHAR (1000) NULL,
     [CreatedOn]           DATETIME        CONSTRAINT [DF_spec_ProductFamilySpec_CreatedOn] DEFAULT (getdate()) NOT NULL,
     [CreatedBy]           NVARCHAR (50)   NULL,
-    CONSTRAINT [PK_spec_ProductFamilySpec] PRIMARY KEY CLUSTERED ([ProductFamilySpecId] ASC),
+    CONSTRAINT [PK_spec_ProductFamilySpec] PRIMARY KEY NONCLUSTERED ([ProductFamilySpecId] ASC),
     CONSTRAINT [UQ_spec_ProductFamilySpec_ProductFamily_SpecVersion] UNIQUE NONCLUSTERED ([ProductFamily] ASC, [SpecVersion] ASC)
 );
+
+
 
 
 GO
@@ -45,4 +47,9 @@ GO
 GRANT ALTER
     ON OBJECT::[spec].[ProductFamilySpec] TO [Production]
     AS [dbo];
+
+
+GO
+CREATE CLUSTERED INDEX [IX_ProductFamilySpec_ProductFamily_IsActive]
+    ON [spec].[ProductFamilySpec]([ProductFamily] ASC, [IsActive] ASC);
 
