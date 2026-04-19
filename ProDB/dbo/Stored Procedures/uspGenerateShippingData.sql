@@ -12,6 +12,7 @@ exec [dbo].[uspGenerateShippingData] @Ship_date='2026-03-06', @Customer_Code='CD
 exec [dbo].[uspGenerateShippingData] @Ship_date='2026-03-06', @Customer_Code='CD04000', @PO='Z20260224-03'
 
 Change Log:
+2026-04-18 JC: Add exception: LN44130-W11
 2026-03-27 JC: Add Debug info
 2026-03-21 JC: Update logic about #ExceptionWafer, Add LN44130-W06 into #ExceptionWafer
 2026-03-09 JC: Update the specifications of 6 products
@@ -172,7 +173,7 @@ BEGIN
         
 	IF OBJECT_ID('tempdb..#ExceptionWafer') IS NOT NULL DROP TABLE #ExceptionWafer
 	create table #ExceptionWafer(LotWafer varchar(11))
-    insert #ExceptionWafer(LotWafer) Values('LN44130-W22'),('LN44793-W03'),('LN44130-W06')
+    insert #ExceptionWafer(LotWafer) Values('LN44130-W22'),('LN44793-W03'),('LN44130-W06'),('LN44130-W11')
 
 	--if not match the Qty, not output
 	if exists (select * from #ShippingData z where z.ProductModel in ('Coral3p1','Coral4p1')

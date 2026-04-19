@@ -6,7 +6,10 @@
 -- Notes:       数据来源 LotWafer_UEC_Mean_Std (FinishDieParameter=0)
 exec [dbo].[uspCalculate_LotWafer_Die_CP_Parameter] @LotWafer = 'LE74796-W18'
 
+TODO：修改 dbo.LotWafer_Die_CP_Parameter，兼容 Coral4p5
+
 Change Log:
+2026-04-17 JC: @ProductFamily_8bit 扩展到 Coral3p1/Coral3p5/CORAL5P3/Coral4p1/Coral6p0/Coral6p3/Coral4p5 7种; Add [IMPD_CH03_C],[IMPD_CH04_C]
 -- =============================================
 */
 CREATE     PROCEDURE [dbo].[uspCalculate_LotWafer_Die_CP_Parameter](
@@ -23,15 +26,16 @@ BEGIN
         RETURN
     
     DECLARE @Now DATETIME = GETDATE();
-    DECLARE @ProductFamily varchar(20), @ChannelNum INT, @impdNum INT
-    SELECT @ProductFamily = LEFT(w.SourceName, 8)
+    DECLARE @ProductFamily_8bit varchar(20), @ChannelNum INT, @impdNum INT
+    SELECT @ProductFamily_8bit = LEFT(w.SourceName, 8)
         FROM dbo.Wafer w
         WHERE w.Wafer号 = @LotWafer;
-    SELECT @ChannelNum    = CASE WHEN LEFT(@ProductFamily, 8) IN ('Coral3p1','Coral3p5','CORAL5P3') THEN 4
-                               WHEN LEFT(@ProductFamily, 8) IN ('Coral4p1','Coral6p0','Coral6p3','Coral4p5') THEN 8
+    SELECT @ChannelNum    = CASE WHEN @ProductFamily_8bit IN ('Coral3p1','Coral3p5','CORAL5P3') THEN 4
+                               WHEN @ProductFamily_8bit IN ('Coral4p1','Coral6p0','Coral6p3','Coral4p5') THEN 8
                           END,
-        @impdNum       = CASE WHEN LEFT(@ProductFamily, 8) IN ('Coral3p1','Coral3p5','CORAL5P3') THEN 1
-                               WHEN LEFT(@ProductFamily, 8) IN ('Coral4p1','Coral6p0','Coral6p3','Coral4p5') THEN 2
+        @impdNum       = CASE WHEN @ProductFamily_8bit IN ('Coral3p1','Coral3p5','CORAL5P3') THEN 1
+                               WHEN @ProductFamily_8bit IN ('Coral4p1','Coral6p0') THEN 2
+                               WHEN @ProductFamily_8bit IN ('Coral4p5','Coral6p3') THEN 4
                           END
     IF @ChannelNum IS NULL
         RETURN
@@ -115,6 +119,8 @@ BEGIN
         FROM (VALUES
             ('IMPD' , 1, cp.IMPD_CH01_C),
             ('IMPD' , 2, cp.IMPD_CH02_C),
+            ('IMPD' , 3, cp.IMPD_CH03_C),
+            ('IMPD' , 4, cp.IMPD_CH04_C),
             ('OMPDM', 1, cp.OMPDM_CH01_C),
             ('OMPDM', 2, cp.OMPDM_CH02_C),
             ('OMPDM', 3, cp.OMPDM_CH03_C),

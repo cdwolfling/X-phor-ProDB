@@ -12,7 +12,7 @@ select *, dbo.ufn_GetChipBin_FromCPData(w82.LotWafer,w82.Cbin) as MES_Bin from d
     where w82.Bin=7 and w82.Bin_V3<>dbo.ufn_GetChipBin_FromCPData(w82.LotWafer,w82.Cbin)
 
 Change Log:
-2026-04-17 JC: 优化Debug方式
+2026-04-17 JC: 优化Debug方式; 增加Coral6p3的判断
 2026-04-10 JC: bugfix, 修正取@mean @std的逻辑
 2026-04-09 JC: 改用[dbo].[ufn_GetChipBin_FromCPData_Coral3p1]的判断方式; 增加Debug信息
 2026-04-09 JC: 无测试结果， 返回0； 无部分测试项， 返回2
@@ -39,10 +39,11 @@ BEGIN
     DECLARE @ProductFamily      VARCHAR(50)
     SELECT @ProductFamily=left(w.SourceName,8) from dbo.Wafer w where w.Wafer号=@LotWafer
     SELECT @ChannelNum = case when @ProductFamily in ('Coral3p1','Coral3p5') then 4
-                            when @ProductFamily in ('Coral4p1','Coral6p0') then 8
+                            when @ProductFamily in ('Coral4p1','Coral6p0','Coral6p3') then 8
                         end
     SELECT @impdNum = case when @ProductFamily in ('Coral3p1','Coral3p5') then 1
                             when @ProductFamily in ('Coral4p1','Coral6p0') then 2
+                            when @ProductFamily in ('Coral6p3') then 4
                         end
     IF @ChannelNum is null
     BEGIN

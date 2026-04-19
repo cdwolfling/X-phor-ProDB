@@ -9,8 +9,12 @@
     [Cdt]                DATETIME       CONSTRAINT [DF_ProductModel_Cdt] DEFAULT (getdate()) NULL,
     [txtBinmapFolder]    VARCHAR (1000) NULL,
     [txtBinmapFolder_V2] VARCHAR (1000) NULL,
+    [Spec_ChannelNum]    INT            NULL,
+    [Spec_impdNum]       INT            NULL,
     CONSTRAINT [PK_ProductModel] PRIMARY KEY CLUSTERED ([ProductModel] ASC)
 );
+
+
 
 
 

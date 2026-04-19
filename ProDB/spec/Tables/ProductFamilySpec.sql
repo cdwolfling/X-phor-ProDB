@@ -1,7 +1,7 @@
 ﻿CREATE TABLE [spec].[ProductFamilySpec] (
     [ProductFamilySpecId] INT             IDENTITY (1, 1) NOT NULL,
     [ProductFamily]       VARCHAR (50)    NOT NULL,
-    [SpecVersion]         INT             NOT NULL,
+    [SpecVersion]         VARCHAR (50)    NOT NULL,
     [IsActive]            BIT             CONSTRAINT [DF_spec_ProductFamilySpec_IsActive] DEFAULT ((1)) NOT NULL,
     [EffectiveDate]       DATE            NULL,
     [Remark]              NVARCHAR (1000) NULL,
@@ -10,6 +10,8 @@
     CONSTRAINT [PK_spec_ProductFamilySpec] PRIMARY KEY NONCLUSTERED ([ProductFamilySpecId] ASC),
     CONSTRAINT [UQ_spec_ProductFamilySpec_ProductFamily_SpecVersion] UNIQUE NONCLUSTERED ([ProductFamily] ASC, [SpecVersion] ASC)
 );
+
+
 
 
 
