@@ -16,42 +16,64 @@
 
 
 
+
+
 GO
 CREATE UNIQUE NONCLUSTERED INDEX [UX_spec_ProductFamilySpec_ProductFamily_Active]
     ON [spec].[ProductFamilySpec]([ProductFamily] ASC) WHERE ([IsActive]=(1));
 
 
 GO
-GRANT UPDATE
-    ON OBJECT::[spec].[ProductFamilySpec] TO [Production]
-    AS [dbo];
+
 
 
 GO
-GRANT SELECT
-    ON OBJECT::[spec].[ProductFamilySpec] TO [Production]
-    AS [dbo];
+
 
 
 GO
-GRANT INSERT
-    ON OBJECT::[spec].[ProductFamilySpec] TO [Production]
-    AS [dbo];
+
 
 
 GO
-GRANT DELETE
-    ON OBJECT::[spec].[ProductFamilySpec] TO [Production]
-    AS [dbo];
+
 
 
 GO
-GRANT ALTER
-    ON OBJECT::[spec].[ProductFamilySpec] TO [Production]
-    AS [dbo];
+
 
 
 GO
 CREATE CLUSTERED INDEX [IX_ProductFamilySpec_ProductFamily_IsActive]
     ON [spec].[ProductFamilySpec]([ProductFamily] ASC, [IsActive] ASC);
+
+
+GO
+GRANT UPDATE
+    ON OBJECT::[spec].[ProductFamilySpec] TO [SpecMaintainer]
+    AS [dbo];
+
+
+GO
+GRANT SELECT
+    ON OBJECT::[spec].[ProductFamilySpec] TO [SpecMaintainer]
+    AS [dbo];
+
+
+GO
+GRANT INSERT
+    ON OBJECT::[spec].[ProductFamilySpec] TO [SpecMaintainer]
+    AS [dbo];
+
+
+GO
+GRANT DELETE
+    ON OBJECT::[spec].[ProductFamilySpec] TO [SpecMaintainer]
+    AS [dbo];
+
+
+GO
+GRANT ALTER
+    ON OBJECT::[spec].[ProductFamilySpec] TO [SpecMaintainer]
+    AS [dbo];
 

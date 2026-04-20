@@ -11,8 +11,13 @@
     [txtBinmapFolder_V2] VARCHAR (1000) NULL,
     [Spec_ChannelNum]    INT            NULL,
     [Spec_impdNum]       INT            NULL,
+    [Die_Qty]            INT            NULL,
+    [Dev_name]           VARCHAR (20)   NULL,
+    [CPFile_Suffix]      VARCHAR (20)   NULL,
     CONSTRAINT [PK_ProductModel] PRIMARY KEY CLUSTERED ([ProductModel] ASC)
 );
+
+
 
 
 
@@ -42,5 +47,11 @@ GRANT UPDATE
 GO
 GRANT SELECT
     ON OBJECT::[dbo].[ProductModel] TO [Production]
+    AS [dbo];
+
+
+GO
+GRANT SELECT
+    ON OBJECT::[dbo].[ProductModel] TO [SpecMaintainer]
     AS [dbo];
 

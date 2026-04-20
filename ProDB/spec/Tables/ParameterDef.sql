@@ -1,4 +1,4 @@
-﻿CREATE TABLE [spec].[ParameterDef] (
+CREATE TABLE [spec].[ParameterDef] (
     [ParameterId]   INT            IDENTITY (1, 1) NOT NULL,
     [ParameterKey]  VARCHAR (100)  NOT NULL,
     [ParameterName] NVARCHAR (100) NULL,
@@ -10,32 +10,50 @@
 );
 
 
+
+
+GO
+
+
+
+GO
+
+
+
+GO
+
+
+
+GO
+
+
+
 GO
 GRANT UPDATE
-    ON OBJECT::[spec].[ParameterDef] TO [Production]
+    ON OBJECT::[spec].[ParameterDef] TO [SpecMaintainer]
     AS [dbo];
 
 
 GO
 GRANT SELECT
-    ON OBJECT::[spec].[ParameterDef] TO [Production]
+    ON OBJECT::[spec].[ParameterDef] TO [SpecMaintainer]
     AS [dbo];
 
 
 GO
 GRANT INSERT
-    ON OBJECT::[spec].[ParameterDef] TO [Production]
+    ON OBJECT::[spec].[ParameterDef] TO [SpecMaintainer]
     AS [dbo];
 
 
 GO
 GRANT DELETE
-    ON OBJECT::[spec].[ParameterDef] TO [Production]
+    ON OBJECT::[spec].[ParameterDef] TO [SpecMaintainer]
     AS [dbo];
 
 
 GO
 GRANT ALTER
-    ON OBJECT::[spec].[ParameterDef] TO [Production]
+    ON OBJECT::[spec].[ParameterDef] TO [SpecMaintainer]
     AS [dbo];
 

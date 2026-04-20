@@ -9,8 +9,16 @@
 );
 
 
+
+
 GO
 GRANT SELECT
     ON OBJECT::[dbo].[AppCatalog] TO [Production]
+    AS [dbo];
+
+
+GO
+GRANT SELECT
+    ON OBJECT::[dbo].[AppCatalog] TO [SpecMaintainer]
     AS [dbo];
 

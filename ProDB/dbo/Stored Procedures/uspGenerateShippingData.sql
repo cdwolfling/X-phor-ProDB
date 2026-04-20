@@ -10,8 +10,11 @@ exec [dbo].[uspGenerateShippingData] @Ship_date='2026-01-27', @Customer_Code='hk
 exec [dbo].[uspGenerateShippingData] @Ship_date='2026-02-06', @Customer_Code='hk02'
 exec [dbo].[uspGenerateShippingData] @Ship_date='2026-03-06', @Customer_Code='CD04', @PO='/'
 exec [dbo].[uspGenerateShippingData] @Ship_date='2026-03-06', @Customer_Code='CD04000', @PO='Z20260224-03'
+exec [dbo].[uspGenerateShippingData] @Ship_date='2026-03-19', @Customer_Code='HK02004', @PO='Z20251028-01'
+exec [dbo].[uspGenerateShippingData] @Ship_date='2026-04-17', @Customer_Code='HK02000', @PO='Z20251028-02'
 
 Change Log:
+2026-04-20 JC: Use dbo.ProductModel.Spec_ChannelNum to control output channel number; User dbo.vw_ProductFamilySpec to check data
 2026-04-18 JC: Add exception: LN44130-W11
 2026-03-27 JC: Add Debug info
 2026-03-21 JC: Update logic about #ExceptionWafer, Add LN44130-W06 into #ExceptionWafer
@@ -88,6 +91,7 @@ BEGIN
             ca.minMPD,
             ca.maxMPD
         FROM #ShippingChip_WithBoxSeq z
+        JOIN dbo.ProductModel p ON z.ProductModel=p.ProductModel AND p.Spec_ChannelNum=4
         JOIN dbo.Wafer w ON z.LotWafer = w.Wafer号
         JOIN dbo.vw_CPTestData v ON z.LotWafer = v.LotWafer AND z.ChipSN = v.ChipSN AND v.isRecent = 1
         CROSS APPLY (
@@ -101,7 +105,6 @@ BEGIN
                 (ISNULL(v.Onchip_loss_CH04_MPD,0))
             ) x(val)
         ) ca
-        WHERE z.ProductModel IN ('Coral3p1', 'Coral3p5', 'Coral5p3')
     -- 8-channel
     INSERT #ShippingData(
         ProductModel, Ship_date, Lot_Wafer_Box_ID, SN, LotWafer, BoxSeq, ChipSN, Ship_Qty, TrayLastSN,
@@ -130,6 +133,7 @@ BEGIN
             ca.minMPD,
             ca.maxMPD
         FROM #ShippingChip_WithBoxSeq z
+        JOIN dbo.ProductModel p ON z.ProductModel=p.ProductModel AND p.Spec_ChannelNum=8
         JOIN dbo.Wafer w ON z.LotWafer = w.Wafer号
         JOIN dbo.vw_CPTestData v ON z.LotWafer = v.LotWafer AND z.ChipSN = v.ChipSN AND v.isRecent = 1
         CROSS APPLY (
@@ -147,7 +151,6 @@ BEGIN
                 (ISNULL(v.Onchip_loss_CH08_MPD,0))
             ) x(val)
         ) ca
-        WHERE z.ProductModel IN ('Coral4p1', 'Coral6p0', 'Coral4p5', 'Coral6p5')
         
 	--if not match the Qty, not output
 	declare @Defined_Qty INT, @Data_Qty INT
@@ -175,28 +178,31 @@ BEGIN
 	create table #ExceptionWafer(LotWafer varchar(11))
     insert #ExceptionWafer(LotWafer) Values('LN44130-W22'),('LN44793-W03'),('LN44130-W06'),('LN44130-W11')
 
-	--if not match the Qty, not output
-	if exists (select * from #ShippingData z where z.ProductModel in ('Coral3p1','Coral4p1')
-                                                and (z.minMPD <= 8.5 or z.maxMPD >=10.5 or 
-                                                    (z.maxMPD-z.minMPD>=1 and z.LotWafer not in (select e.LotWafer from #ExceptionWafer e))
-                                                    )
-                                                )
-	    or exists (select * from #ShippingData z where z.ProductModel='Coral4p5'
-                                                and (z.minMPD <= 5 or z.maxMPD >=8 or 
-                                                    (z.maxMPD-z.minMPD>=1 and z.LotWafer not in (select e.LotWafer from #ExceptionWafer e))
-                                                    )
-                                                )
-	    or exists (select * from #ShippingData z where z.ProductModel in ('Coral5p3','Coral6p0')
-                                                and (z.minMPD <= 8.5 or z.maxMPD >=11.5 or 
-                                                    (z.maxMPD-z.minMPD>=1 and z.LotWafer not in (select e.LotWafer from #ExceptionWafer e))
-                                                    )
-                                                )
-	    or exists (select * from #ShippingData z where z.ProductModel='Coral6p5'
-                                                and (z.minMPD <= 5 or z.maxMPD >=8.5 or 
-                                                    (z.maxMPD-z.minMPD>=1 and z.LotWafer not in (select e.LotWafer from #ExceptionWafer e))
-                                                    )
-                                                )
+	--if not match the check spec 1, not output
+    if exists (
+            select z.*,s1.SpecValue
+            from #ShippingData z
+            join spec.vw_ProductFamilySpec s1 on s1.IsActive=1 and s1.ParameterKey in ('mpd_loss_range_high') and z.ProductModel=s1.ProductFamily
+            where (z.maxMPD-z.minMPD) >= s1.SpecValue
+            and z.LotWafer not in (select e.LotWafer from #ExceptionWafer e)
+             )
 	begin
+        print 'not match the check spec 1: MPD range'
+		select z.Ship_date, z.Lot_Wafer_Box_ID, z.SN
+			, z.Onchip_loss_CH01_MPD, z.Onchip_loss_CH02_MPD, z.Onchip_loss_CH03_MPD, z.Onchip_loss_CH04_MPD, z.Onchip_loss_CH05_MPD, z.Onchip_loss_CH06_MPD, z.Onchip_loss_CH07_MPD, z.Onchip_loss_CH08_MPD
+			from #ShippingData z
+            where 1=2
+		return
+	end
+	--if not match the check spec 2, not output    
+	if exists (select z.*,s1.SpecValue,s2.SpecValue
+        from #ShippingData z
+        join spec.vw_ProductFamilySpec s1 on s1.IsActive=1 and s1.ParameterKey in ('onchip_loss_mpd_low') and z.ProductModel=s1.ProductFamily
+        join spec.vw_ProductFamilySpec s2 on s2.IsActive=1 and s2.ParameterKey in ('onchip_loss_mpd_high') and z.ProductModel=s2.ProductFamily
+        where z.minMPD <= s1.SpecValue or z.maxMPD >= s2.SpecValue
+        )
+	begin
+        print 'not match the check spec 2: out of minMPD and maxMPD'
 		select z.Ship_date, z.Lot_Wafer_Box_ID, z.SN
 			, z.Onchip_loss_CH01_MPD, z.Onchip_loss_CH02_MPD, z.Onchip_loss_CH03_MPD, z.Onchip_loss_CH04_MPD, z.Onchip_loss_CH05_MPD, z.Onchip_loss_CH06_MPD, z.Onchip_loss_CH07_MPD, z.Onchip_loss_CH08_MPD
 			from #ShippingData z

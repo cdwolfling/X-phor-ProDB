@@ -1,4 +1,4 @@
-﻿CREATE TABLE [spec].[ProductFamilySpecDetail] (
+CREATE TABLE [spec].[ProductFamilySpecDetail] (
     [ProductFamilySpecDetailId] INT             IDENTITY (1, 1) NOT NULL,
     [ProductFamilySpecId]       INT             NOT NULL,
     [ParameterId]               INT             NOT NULL,
@@ -10,37 +10,55 @@
 );
 
 
+
+
 GO
 CREATE NONCLUSTERED INDEX [IX_spec_ProductFamilySpecDetail_ParameterId]
     ON [spec].[ProductFamilySpecDetail]([ParameterId] ASC);
 
 
 GO
+
+
+
+GO
+
+
+
+GO
+
+
+
+GO
+
+
+
+GO
 GRANT UPDATE
-    ON OBJECT::[spec].[ProductFamilySpecDetail] TO [Production]
+    ON OBJECT::[spec].[ProductFamilySpecDetail] TO [SpecMaintainer]
     AS [dbo];
 
 
 GO
 GRANT SELECT
-    ON OBJECT::[spec].[ProductFamilySpecDetail] TO [Production]
+    ON OBJECT::[spec].[ProductFamilySpecDetail] TO [SpecMaintainer]
     AS [dbo];
 
 
 GO
 GRANT INSERT
-    ON OBJECT::[spec].[ProductFamilySpecDetail] TO [Production]
+    ON OBJECT::[spec].[ProductFamilySpecDetail] TO [SpecMaintainer]
     AS [dbo];
 
 
 GO
 GRANT DELETE
-    ON OBJECT::[spec].[ProductFamilySpecDetail] TO [Production]
+    ON OBJECT::[spec].[ProductFamilySpecDetail] TO [SpecMaintainer]
     AS [dbo];
 
 
 GO
 GRANT ALTER
-    ON OBJECT::[spec].[ProductFamilySpecDetail] TO [Production]
+    ON OBJECT::[spec].[ProductFamilySpecDetail] TO [SpecMaintainer]
     AS [dbo];
 

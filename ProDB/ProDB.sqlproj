@@ -161,7 +161,6 @@
     <Build Include="dbo\Views\vw_CPTestData.sql" />
     <Build Include="dbo\Stored Procedures\uspGenerateFileID_ToHandlingCPData.sql" />
     <Build Include="dbo\Functions\ufnGetStation_FromCPTestFilePath.sql" />
-    <Build Include="dbo\Tables\Customer_ShippingData.sql" />
     <Build Include="dbo\Stored Procedures\uspGenerateShippingData_ToDoList.sql" />
     <Build Include="dbo\Stored Procedures\uspGenerateShippingData.sql" />
     <Build Include="dbo\Stored Procedures\uspGenerateShippingData_SaveResult.sql" />
@@ -224,6 +223,9 @@
     <Build Include="dbo\Functions\ufn_GetChipBin_FromCPData_Fast.sql" />
     <Build Include="dbo\Stored Procedures\uspCalculate_LotWafer_Die_CP_Parameter_Job.sql" />
     <Build Include="spec\Tables\Parameter_Xlsx_Yaml_Map.sql" />
+    <Build Include="dbo\Tables\Config_Ship_InsertionLoss_ProductModel.sql" />
+    <Build Include="dbo\Tables\Config_Ship_InsertionLoss_Customer.sql" />
+    <Build Include="Security\SpecMaintainer.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Project2DEV.scmp" />

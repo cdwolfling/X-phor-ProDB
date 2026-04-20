@@ -11,6 +11,8 @@
 
 
 
+
+
 GO
 CREATE NONCLUSTERED INDEX [IX_AppLoginLog_LoginTime]
     ON [dbo].[AppLoginLog]([LoginTime] DESC);
@@ -24,5 +26,35 @@ CREATE NONCLUSTERED INDEX [IX_AppLoginLog_AppVer]
 GO
 GRANT SELECT
     ON OBJECT::[dbo].[AppLoginLog] TO [Production]
+    AS [dbo];
+
+
+GO
+GRANT UPDATE
+    ON OBJECT::[dbo].[AppLoginLog] TO [SpecMaintainer]
+    AS [dbo];
+
+
+GO
+GRANT SELECT
+    ON OBJECT::[dbo].[AppLoginLog] TO [SpecMaintainer]
+    AS [dbo];
+
+
+GO
+GRANT INSERT
+    ON OBJECT::[dbo].[AppLoginLog] TO [SpecMaintainer]
+    AS [dbo];
+
+
+GO
+GRANT DELETE
+    ON OBJECT::[dbo].[AppLoginLog] TO [SpecMaintainer]
+    AS [dbo];
+
+
+GO
+GRANT ALTER
+    ON OBJECT::[dbo].[AppLoginLog] TO [SpecMaintainer]
     AS [dbo];
 
