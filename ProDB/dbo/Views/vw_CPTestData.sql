@@ -1,5 +1,6 @@
 ﻿
 
+
 /*
 2026-01-26 JC: 用PIVOT， 将key/value的存储结果， 展示为多列的形式
 select * from [dbo].[vw_CPTestData] v
@@ -10,9 +11,10 @@ select * from [dbo].[vw_CPTestData] v
     ORDER BY LotWafer, Dev_ID, Die_Location
 
 Change Log:
+2026-04-21 JC: Add Onchip_MPD_CH01~Onchip_MPD_CH08
 2026-04-17 JC: Add [IMPD_CH03_C],[IMPD_CH04_C]
-2026-04-09 JC: Add Loss_range, PPI_CH01 ~ PPI_CH08, MPD_Loss_range, OMPDM_CH01_db ~ OMPDM_CH08_db, OMPDS_CH01_db ~ OMPDS_CH08_db
-2026-02-14 JC: Add HTU_CH01 ~ HTU_CH08
+2026-04-09 JC: Add Loss_range, PPI_CH01~PPI_CH08, MPD_Loss_range, OMPDM_CH01_db~OMPDM_CH08_db, OMPDS_CH01_db~OMPDS_CH08_db
+2026-02-14 JC: Add HTU_CH01~HTU_CH08
 2026-02-14 JC: Add new 18 output
 2026-02-06 JC: Add new 1 output
 2026-02-02 JC: output ER_CH01~ER_CH08
@@ -52,6 +54,7 @@ SELECT ProductModel, LotWafer, isRecent, FilePath, FileModifiedTime, CPTest_Trac
     , p.MPD_Loss_range
     , p.[OMPDM_CH01_db], p.[OMPDM_CH02_db], p.[OMPDM_CH03_db], p.[OMPDM_CH04_db], p.[OMPDM_CH05_db], p.[OMPDM_CH06_db], p.[OMPDM_CH07_db], p.[OMPDM_CH08_db]
     , p.[OMPDS_CH01_db], p.[OMPDS_CH02_db], p.[OMPDS_CH03_db], p.[OMPDS_CH04_db], p.[OMPDS_CH05_db], p.[OMPDS_CH06_db], p.[OMPDS_CH07_db], p.[OMPDS_CH08_db]
+    , p.[Onchip_MPD_CH01], p.[Onchip_MPD_CH02], p.[Onchip_MPD_CH03], p.[Onchip_MPD_CH04], p.[Onchip_MPD_CH05], p.[Onchip_MPD_CH06], p.[Onchip_MPD_CH07], p.[Onchip_MPD_CH08]
     FROM S
     PIVOT
     (
@@ -66,5 +69,6 @@ SELECT ProductModel, LotWafer, isRecent, FilePath, FileModifiedTime, CPTest_Trac
         ,MPD_Loss_range
         ,[OMPDM_CH01_db],[OMPDM_CH02_db],[OMPDM_CH03_db],[OMPDM_CH04_db],[OMPDM_CH05_db],[OMPDM_CH06_db],[OMPDM_CH07_db],[OMPDM_CH08_db]
         ,[OMPDS_CH01_db],[OMPDS_CH02_db],[OMPDS_CH03_db],[OMPDS_CH04_db],[OMPDS_CH05_db],[OMPDS_CH06_db],[OMPDS_CH07_db],[OMPDS_CH08_db]
+        , [Onchip_MPD_CH01], [Onchip_MPD_CH02], [Onchip_MPD_CH03], [Onchip_MPD_CH04], [Onchip_MPD_CH05], [Onchip_MPD_CH06], [Onchip_MPD_CH07], [Onchip_MPD_CH08]
         )
     ) p

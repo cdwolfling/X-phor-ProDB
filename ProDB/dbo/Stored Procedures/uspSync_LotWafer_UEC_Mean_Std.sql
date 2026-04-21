@@ -7,6 +7,7 @@
 -- Notes:
 
 Change Log:
+2026-04-20 JC: Changed the lookback period from 40 days to 120 days.
 2026-04-16 JC: set u.FinishDieParameter = 0, if update happened
 -- =============================================
 */
@@ -34,7 +35,7 @@ BEGIN
         ON cp.LotWafer = u.LotWafer
        AND cp.FileModifiedTime = u.CPFileTime
     OUTER APPLY dbo.ufn_GetUEC_Mean_Std(cp.LotWafer) ms
-    WHERE cp.FileModifiedTime >= DATEADD(DAY, -40, @Now)
+    WHERE cp.FileModifiedTime >= DATEADD(DAY, -120, @Now)
       AND cp.isRecent = 1
       AND cp.FileModifiedTime <= DATEADD(MINUTE, -5, @Now)
       AND u.LotWafer IS NULL;

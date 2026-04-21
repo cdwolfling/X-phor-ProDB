@@ -9,6 +9,7 @@ exec [dbo].[uspReport_BinmapCheck_For_Shipping] @ProductFamily='Coral6p0', @Ship
 exec [dbo].[uspReport_BinmapCheck_For_Shipping] @ProductFamily='Coral6p0', @Ship_date='2026-04-07', @Customer_Code='QD01000'
 
 Change Log:
+2026-04-21 JC: Performance improved.
 2026-04-17 JC: Performance improved.
 2026-04-09 JC: Replace ufn_GetChipBin_FromCPData with ufn_GetChipBin_FromCPData_Coral6p0
 -- =============================================
@@ -31,7 +32,8 @@ BEGIN
     
     declare @ProductFamily_B varchar(10)
     select @ProductFamily_B=replace(@ProductFamily,'p','.')
-
+    
+    -- 1. 准备 #ShippingUnit 临时表
 	IF OBJECT_ID('tempdb..#ShippingUnit') IS NOT NULL DROP TABLE #ShippingUnit
 	create table #ShippingUnit(Ship_date date, Customer_Code varchar(15), PO varchar(25), Lot_Wafer_Box_ID varchar(20)
         , ProductFamily varchar(20), LotWafer varchar(11), ChipSN varchar(11), ShippingBin INT, BasePass bit, MES_Bin int)
@@ -45,19 +47,22 @@ BEGIN
         and s.Project in (@ProductFamily,@ProductFamily_B)
     create clustered index IX_ToCheckDie on #ShippingUnit(LotWafer, ChipSN, ProductFamily)
 	
-    -- 1. Update ShippingBin for Coral6p0 Bin7Issue
-    --ReworkBatch 1
-    update d set d.ShippingBin=v3.Bin from #ShippingUnit d
-        join dbo.Z_Die_Bin7Case_Coral6p0_33Wafer_BinmapV3 v3 on v3.LotWafer=d.LotWafer and v3.Cbin=d.ChipSN
-        where v3.Bin is not null
-    --ReworkBatch 2
-    update d set d.ShippingBin=v3.Bin_V3 from #ShippingUnit d
-        join dbo.Die_WrongBin7 v3 on v3.LotWafer=d.LotWafer and v3.Cbin=d.ChipSN
-        where v3.Bin=7 and v3.Bin_V3 is not null
-    --ReworkBatch 3
-    update d set d.ShippingBin=v3.Bin_V3 from #ShippingUnit d
-        join dbo.Die_WrongBin7_82Wafer v3 on v3.LotWafer=d.LotWafer and v3.Cbin=d.ChipSN
-        where v3.Bin=7 and v3.Bin_V3 is not null
+    -- 1.1 Update ShippingBin for Coral6p0 Bin7Issue
+    if exists(select 1 from #ShippingUnit z where z.ProductFamily='Coral6p0')
+    begin
+        --ReworkBatch 1
+        update d set d.ShippingBin=v3.Bin from #ShippingUnit d
+            join dbo.Z_Die_Bin7Case_Coral6p0_33Wafer_BinmapV3 v3 on v3.LotWafer=d.LotWafer and v3.Cbin=d.ChipSN
+            where v3.Bin is not null
+        --ReworkBatch 2
+        update d set d.ShippingBin=v3.Bin_V3 from #ShippingUnit d
+            join dbo.Die_WrongBin7 v3 on v3.LotWafer=d.LotWafer and v3.Cbin=d.ChipSN
+            where v3.Bin=7 and v3.Bin_V3 is not null
+        --ReworkBatch 3
+        update d set d.ShippingBin=v3.Bin_V3 from #ShippingUnit d
+            join dbo.Die_WrongBin7_82Wafer v3 on v3.LotWafer=d.LotWafer and v3.Cbin=d.ChipSN
+            where v3.Bin=7 and v3.Bin_V3 is not null
+    end
 
     -- 2. 先准备 Spec 临时表
     if OBJECT_ID('tempdb..#Spec') is not null drop table #Spec;
@@ -87,7 +92,7 @@ BEGIN
         group by v.ProductFamily;
     create unique clustered index IX_Spec on #Spec(ProductFamily);
     
-    -- 3. Update BasePass &amp; MES_Bin
+    -- 3. Update BasePass and MES_Bin
     ;with PassCTE as
     (
         select

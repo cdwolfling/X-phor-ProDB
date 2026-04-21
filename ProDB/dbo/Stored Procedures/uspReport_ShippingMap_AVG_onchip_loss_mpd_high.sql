@@ -2,19 +2,16 @@
 =============================================
 Author:		Jackie Chen
 Create date: 2026-03-16
-Description:	产生ShippingMap
+Description:	产生Shipping AVG_onchip_loss_mpd_high BinMap
 Sample:
-exec [dbo].[uspReport_ShippingMap] @Wafer='LN41683-W16', @InputCode='C05-303'
-exec [dbo].[uspReport_ShippingMap] @Wafer='', @InputCode='LN42167-W05-03'
-exec [dbo].[uspReport_ShippingMap] @Wafer='', @InputCode='25120065590'
-exec [dbo].[uspReport_ShippingMap] @Wafer='', @InputCode='LN42164-W06-05'
+exec [dbo].[uspReport_ShippingMap_AVG_onchip_loss_mpd_high] @Wafer='LN41683-W16', @InputCode='C05-303'
+exec [dbo].[uspReport_ShippingMap_AVG_onchip_loss_mpd_high] @Wafer='', @InputCode='LN42173-W08-03'
 
 Change Log:
-2026-04-21 JC: Resize to @Box_Y * @Box_X
-2026-03-23 JC: Add new samples
+2026-04-21 JC: Initial. Base uspReport_ShippingMap, 输出ufn_GetChipBin_FromCPData_AVG_onchip_loss_mpd_high的结果
 =============================================
 */
-CREATE   PROCEDURE [dbo].[uspReport_ShippingMap]
+CREATE   PROCEDURE [dbo].[uspReport_ShippingMap_AVG_onchip_loss_mpd_high]
 (
     @Wafer varchar(20)='',
     @InputCode varchar(20)='' --Input ChipSN or LotWaferTrayKey or ShippingSN
@@ -52,7 +49,8 @@ BEGIN
 	end
 	
     IF OBJECT_ID('tempdb..#ShippingChip_WithBoxSeq') IS NOT NULL DROP TABLE #ShippingChip_WithBoxSeq
-    create table #ShippingChip_WithBoxSeq(ProductModel varchar(8), Ship_date date, Lot_Wafer_Box_ID varchar(20), ChipSN varchar(50), Ship_Qty INT, TrayLastSN varchar(20), BoxSeq INT, RowNo INT, ColNo INT, ShippingSN varchar(20))
+    create table #ShippingChip_WithBoxSeq(ProductModel varchar(8), Ship_date date, Lot_Wafer_Box_ID varchar(20), ChipSN varchar(50), Ship_Qty INT, TrayLastSN varchar(20), BoxSeq INT, RowNo INT, ColNo INT, ShippingSN varchar(20)
+        ,AVG_onchip_loss_mpd_high_BIN int)
     insert #ShippingChip_WithBoxSeq(ProductModel, Ship_date, Lot_Wafer_Box_ID, ChipSN, Ship_Qty, TrayLastSN, BoxSeq, RowNo, ColNo)
 	    select h.ProductModel, s.Ship_date, h.LotWaferTrayKey, c.ChipSN, s.Ship_Qty, s.TrayLastSN
 	    , BoxSeq = ROW_NUMBER() OVER (PARTITION BY c.TrayMapId ORDER BY c.RowNo, c.ColNo)
@@ -64,6 +62,8 @@ BEGIN
 	    order by c.RowNo,c.ColNo
     update z set z.ShippingSN=CONVERT(bigint, z.TrayLastSN) - z.Ship_Qty + z.BoxSeq
 	    from #ShippingChip_WithBoxSeq z
+    update z set z.AVG_onchip_loss_mpd_high_BIN=dbo.ufn_GetChipBin_FromCPData_AVG_onchip_loss_mpd_high(left(z.Lot_Wafer_Box_ID,11), z.ChipSN)
+	    from #ShippingChip_WithBoxSeq z		
 
 	SELECT TOP 1 @ProductModel = z.ProductModel
     FROM #ShippingChip_WithBoxSeq AS z
@@ -102,7 +102,7 @@ BEGIN
     SELECT
         R.RowNo,
         C.ColNo,
-        T.ShippingSN,
+        T.AVG_onchip_loss_mpd_high_BIN,
         T.ChipSN,
         @ProductModel AS ProductModel,
         @LotWaferTrayKey AS Lot_Wafer_Box_ID
