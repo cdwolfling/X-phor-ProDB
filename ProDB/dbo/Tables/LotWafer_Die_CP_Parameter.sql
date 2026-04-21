@@ -22,8 +22,14 @@
     [uec_onchip_std]           FLOAT (53)   NULL,
     [Cdt]                      DATETIME     CONSTRAINT [DF_LotWafer_Die_CP_Parameter_Cdt] DEFAULT (getdate()) NULL,
     [Udt]                      DATETIME     CONSTRAINT [DF_LotWafer_Die_CP_Parameter_Udt] DEFAULT (getdate()) NULL,
+    [uec_te_low]               FLOAT (53)   NULL,
+    [uec_te_high]              FLOAT (53)   NULL,
+    [uec_tm_low]               FLOAT (53)   NULL,
+    [uec_tm_high]              FLOAT (53)   NULL,
     CONSTRAINT [PK_LotWafer_Die_CP_Parameter] PRIMARY KEY CLUSTERED ([ID] ASC)
 );
+
+
 
 
 GO

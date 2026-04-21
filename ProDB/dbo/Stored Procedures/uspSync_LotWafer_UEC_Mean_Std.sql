@@ -5,8 +5,10 @@
 -- Create date: 2026-04-08
 -- Description:	对 dbo.CPTest_File 中的LotWafer, 计算并记录其UEC_Mean_Std值
 -- Notes:
+select * from dbo.LotWafer_UEC_Mean_Std d where d.FinishDieParameter=0
 
 Change Log:
+2026-04-21 JC: Changed the lookback date to 2025-01-01
 2026-04-20 JC: Changed the lookback period from 40 days to 120 days.
 2026-04-16 JC: set u.FinishDieParameter = 0, if update happened
 -- =============================================
@@ -35,7 +37,7 @@ BEGIN
         ON cp.LotWafer = u.LotWafer
        AND cp.FileModifiedTime = u.CPFileTime
     OUTER APPLY dbo.ufn_GetUEC_Mean_Std(cp.LotWafer) ms
-    WHERE cp.FileModifiedTime >= DATEADD(DAY, -120, @Now)
+    WHERE cp.FileModifiedTime >= '2025-01-01'
       AND cp.isRecent = 1
       AND cp.FileModifiedTime <= DATEADD(MINUTE, -5, @Now)
       AND u.LotWafer IS NULL;

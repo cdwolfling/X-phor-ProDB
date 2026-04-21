@@ -54,6 +54,10 @@ BEGIN
     DECLARE @mpd_loss_low       FLOAT
     DECLARE @mpd_loss_high      FLOAT
     DECLARE @mpd_loss_range     FLOAT
+    DECLARE @uec_te_low         FLOAT
+    DECLARE @uec_te_high         FLOAT
+    DECLARE @uec_tm_low         FLOAT
+    DECLARE @uec_tm_high         FLOAT
 
     DECLARE @spec_uec_low            FLOAT
     DECLARE @spec_uec_high           FLOAT
@@ -73,6 +77,10 @@ BEGIN
     DECLARE @spec_mpd_loss_low       FLOAT
     DECLARE @spec_mpd_loss_high      FLOAT
     DECLARE @spec_mpd_loss_range     FLOAT
+    DECLARE @spec_uec_te_low         FLOAT
+    DECLARE @spec_uec_te_high         FLOAT
+    DECLARE @spec_uec_tm_low         FLOAT
+    DECLARE @spec_uec_tm_high         FLOAT
 
     IF NOT EXISTS (SELECT 1 FROM dbo.LotWafer_Die_CP_Parameter p WHERE p.LotWafer = @LotWafer AND p.ChipSN = @ChipSN)
     BEGIN
@@ -97,7 +105,11 @@ BEGIN
         @dc_high         = p.dark_current_high,
         @mpd_loss_low    = p.onchip_loss_mpd_low,
         @mpd_loss_high   = p.onchip_loss_mpd_high,
-        @mpd_loss_range  = p.mpd_loss_range_high
+        @mpd_loss_range  = p.mpd_loss_range_high,
+        @uec_te_low     = p.uec_te_low,
+        @uec_te_high    = p.uec_te_high,
+        @uec_tm_low     = p.uec_tm_low,
+        @uec_tm_high    = p.uec_tm_high
     FROM dbo.LotWafer_Die_CP_Parameter p
     WHERE p.LotWafer = @LotWafer and p.ChipSN = @ChipSN
 
@@ -119,7 +131,11 @@ BEGIN
         @spec_dc_high         = MAX(CASE WHEN v.ParameterKey = 'dark_current_high'       THEN TRY_CONVERT(FLOAT, v.SpecValue) END),
         @spec_mpd_loss_low    = MAX(CASE WHEN v.ParameterKey = 'onchip_loss_mpd_low'     THEN TRY_CONVERT(FLOAT, v.SpecValue) END),
         @spec_mpd_loss_high   = MAX(CASE WHEN v.ParameterKey = 'onchip_loss_mpd_high'    THEN TRY_CONVERT(FLOAT, v.SpecValue) END),
-        @spec_mpd_loss_range  = MAX(CASE WHEN v.ParameterKey = 'mpd_loss_range_high'     THEN TRY_CONVERT(FLOAT, v.SpecValue) END)
+        @spec_mpd_loss_range  = MAX(CASE WHEN v.ParameterKey = 'mpd_loss_range_high'     THEN TRY_CONVERT(FLOAT, v.SpecValue) END),
+        @spec_uec_te_low     = MAX(CASE WHEN v.ParameterKey = 'uec_te_low'     THEN TRY_CONVERT(FLOAT, v.SpecValue) END),
+        @spec_uec_te_high    = MAX(CASE WHEN v.ParameterKey = 'uec_te_high'     THEN TRY_CONVERT(FLOAT, v.SpecValue) END),
+        @spec_uec_tm_low     = MAX(CASE WHEN v.ParameterKey = 'uec_tm_low'     THEN TRY_CONVERT(FLOAT, v.SpecValue) END),
+        @spec_uec_tm_high    = MAX(CASE WHEN v.ParameterKey = 'uec_tm_high'     THEN TRY_CONVERT(FLOAT, v.SpecValue) END)
     FROM spec.vw_ProductFamilySpec v
     WHERE v.ProductFamily = @ProductFamily
       AND v.IsActive = 1
@@ -128,23 +144,27 @@ BEGIN
     -- 6. Bin 判定
     -- =============================================
     DECLARE @BasePass bit = 0;
-    IF @uec_low>@spec_uec_low
-       AND @uec_high<@spec_uec_high
-       AND @std_multiplier<@spec_std_multiplier
-       AND @loss_low>@spec_loss_low
-       AND @loss_high<@spec_loss_high
-       AND @loss_range_high<@spec_loss_range_high
-       AND @ompd_range_high<@spec_ompd_range_high
-       AND @mpdm_mpds_dev<@spec_mpdm_mpds_dev
-       AND @ppi_low>@spec_ppi_low
-       AND @ppi_high<@spec_ppi_high
-       AND @ht_low>@spec_ht_low
-       AND @ht_high<@spec_ht_high
-       AND @dc_low>@spec_dc_low
-       AND @dc_high<@spec_dc_high
-       AND @mpd_loss_low>@spec_mpd_loss_low
-       AND @mpd_loss_high<@spec_mpd_loss_high
-       AND @mpd_loss_range<@spec_mpd_loss_range
+    IF (@uec_low>@spec_uec_low or @spec_uec_low is null)
+       AND (@uec_high<@spec_uec_high or @spec_uec_high is null)
+       AND (@std_multiplier<@spec_std_multiplier or @spec_std_multiplier is null)
+       AND (@loss_low>@spec_loss_low or @spec_loss_low is null)
+       AND (@loss_high<@spec_loss_high or @spec_loss_high is null)
+       AND (@loss_range_high<@spec_loss_range_high or @spec_loss_range_high is null)
+       AND (@ompd_range_high<@spec_ompd_range_high or @spec_ompd_range_high is null)
+       AND (@mpdm_mpds_dev<@spec_mpdm_mpds_dev or @spec_mpdm_mpds_dev is null)
+       AND (@ppi_low>@spec_ppi_low or @spec_ppi_low is null)
+       AND (@ppi_high<@spec_ppi_high or @spec_ppi_high is null)
+       AND (@ht_low>@spec_ht_low or @spec_ht_low is null)
+       AND (@ht_high<@spec_ht_high or @spec_ht_high is null)
+       AND (@dc_low>@spec_dc_low or @spec_dc_low is null)
+       AND (@dc_high<@spec_dc_high or @spec_dc_high is null)
+       AND (@mpd_loss_low>@spec_mpd_loss_low or @spec_mpd_loss_low is null)
+       AND (@mpd_loss_high<@spec_mpd_loss_high or @spec_mpd_loss_high is null)
+       AND (@mpd_loss_range<@spec_mpd_loss_range or @spec_mpd_loss_range is null)
+       AND (@uec_te_low>@spec_uec_te_low or @spec_uec_te_low is null)
+       AND (@uec_te_high<@spec_uec_te_high or @spec_uec_te_high is null)
+       AND (@uec_tm_low>@spec_uec_tm_low or @spec_uec_tm_low is null)
+       AND (@uec_tm_high<@spec_uec_tm_high or @spec_uec_tm_high is null)
     BEGIN
         SET @BasePass = 1
     END
