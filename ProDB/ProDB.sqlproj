@@ -231,6 +231,7 @@
     <Build Include="dbo\Functions\ufn_GetChipBin_FromCPData_AVG_onchip_loss_mpd_high.sql" />
     <Build Include="dbo\Stored Procedures\uspReport_ShippingMap_AVG_onchip_loss_mpd_high.sql" />
     <Build Include="dbo\Stored Procedures\uspCleanTrayMap.sql" />
+    <Build Include="spec\Tables\Parameter_Xlsx_Yaml_Map_ProductModel.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Project2DEV.scmp" />
