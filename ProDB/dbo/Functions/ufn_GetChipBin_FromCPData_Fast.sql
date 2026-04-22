@@ -12,6 +12,7 @@ select *, dbo.ufn_GetChipBin_FromCPData_Fast(w82.LotWafer,w82.Cbin) as MES_Bin f
     where w82.Bin=7 and w82.Bin_V3<>dbo.ufn_GetChipBin_FromCPData_Fast(w82.LotWafer,w82.Cbin)
 
 Change Log:
+2026-04-22 JC: Add Debug lines
 2026-04-17 JC: Bugfix.
 2026-04-16 JC: 基于ufn_GetChipBin_FromCPData修改而来， 使用dbo.LotWafer_Die_CP_Parameter提高效率
 2026-04-10 JC: bugfix, 修正取@mean @std的逻辑
@@ -28,6 +29,9 @@ CREATE FUNCTION [dbo].[ufn_GetChipBin_FromCPData_Fast]
 RETURNS INT
 AS
 BEGIN
+    --Declare @LotWafer VARCHAR(50)='LN44796-W12'
+    --Declare @ChipSN   VARCHAR(50)='E09-104'
+
     DECLARE @Bin INT = 2;  -- 默认 Bin2（兜底）
 
     -- =============================================

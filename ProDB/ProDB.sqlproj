@@ -232,6 +232,9 @@
     <Build Include="dbo\Stored Procedures\uspReport_ShippingMap_AVG_onchip_loss_mpd_high.sql" />
     <Build Include="dbo\Stored Procedures\uspCleanTrayMap.sql" />
     <Build Include="spec\Tables\Parameter_Xlsx_Yaml_Map_ProductModel.sql" />
+    <Build Include="dbo\Tables\Coral4p1_F2Issue_V2.sql" />
+    <Build Include="dbo\Tables\Coral4p1_F2Issue_V1.sql" />
+    <Build Include="dbo\Stored Procedures\uspReport_BinmapCheck.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Project2DEV.scmp" />

@@ -4,10 +4,11 @@ Create by Jackiech on 2026-04-02
 SELECT mean, std FROM dbo.ufn_GetUEC_Mean_Std('LN41477-W01')
 
 Change Log:
+2026-04-21 JC: Change @LotWafer to VARCHAR(11)
 2026-04-04 JC: Remove output CPFileTime
 2026-04-04 JC: Add " AND v.isRecent=1"; Add output CPFileTime
 */
-CREATE FUNCTION [dbo].[ufn_GetUEC_Mean_Std](@LotWafer NVARCHAR(50))
+CREATE FUNCTION [dbo].[ufn_GetUEC_Mean_Std](@LotWafer VARCHAR(11))
 RETURNS TABLE
 AS
 RETURN (
