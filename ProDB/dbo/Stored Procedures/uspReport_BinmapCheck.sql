@@ -9,6 +9,10 @@ exec [dbo].[uspReport_BinmapCheck] @ProductFamily='Coral4p1', @WaferList='TG1687
 exec [dbo].[uspReport_BinmapCheck] @ProductFamily='Coral4p1', @WaferList='TG16874-W13,TG16874-W05,TG16874-W12', @SpecVersion='1.1_F2V1'
 
 Change Log:
+2026-04-28 JC: Set dbo.Die as Base, then "left join dbo.CPTest_File"; CLT/ORM规则： 3p1 F2与 4p1 F2一致（即 bin7 作为 pass 参与挑选）
+2026-04-27 JC: Add Coral3p1 1.2_F2V1 rule
+2026-04-27 JC: Add Coral4p1 1.1_F2V3 rule
+2026-04-23 JC: ">" --> ">="
 -- =============================================
 */
 CREATE   PROCEDURE [dbo].[uspReport_BinmapCheck]
@@ -30,30 +34,29 @@ BEGIN
     
     -- 1. 准备 #ToCheckUnits 临时表
 	IF OBJECT_ID('tempdb..#ToCheckUnits') IS NOT NULL DROP TABLE #ToCheckUnits
-	create table #ToCheckUnits(ProductFamily varchar(20), LotWafer varchar(11), ChipSN varchar(11), RD_Bin INT, BasePass bit, MES_Bin int)
-	insert #ToCheckUnits(ProductFamily, LotWafer, ChipSN, RD_Bin)
-		select w.ProductModel, w.LotWafer, d.Cbin, d.Bin
-        from dbo.CPTest_File w
-        join dbo.Die d on w.LotWafer=d.LotWafer
-        where w.isRecent=1
-            and d.Bin not in (0,3)
-            and w.LotWafer in (select f.MyColumn from dbo.ufnGetListFromSourceString(@WaferList,',') f where f.MyColumn<>'')
+	create table #ToCheckUnits(ProductFamily varchar(20), LotWafer varchar(11), ChipSN varchar(11), Traveler_Bin INT, BasePass bit, MES_Bin int)
+	insert #ToCheckUnits(ProductFamily, LotWafer, ChipSN, Traveler_Bin)
+		select w.ProductModel, d.LotWafer, d.Cbin, d.Bin
+        from dbo.Die d
+        left join dbo.CPTest_File w on w.LotWafer=d.LotWafer and w.isRecent=1
+        where d.Bin not in (0,3)
+            and d.LotWafer in (select f.MyColumn from dbo.ufnGetListFromSourceString(@WaferList,',') f where f.MyColumn<>'')
 
     create clustered index IX_ToCheckDie on #ToCheckUnits(LotWafer, ChipSN, ProductFamily)
 	
-    -- 1.1 Update RD_Bin for Coral6p0 Bin7Issue
+    -- 1.1 Update Traveler_Bin for Coral6p0 Bin7Issue
     if exists(select 1 from #ToCheckUnits z where z.ProductFamily='Coral6p0')
     begin
         --ReworkBatch 1
-        update d set d.RD_Bin=v3.Bin from #ToCheckUnits d
+        update d set d.Traveler_Bin=v3.Bin from #ToCheckUnits d
             join dbo.Z_Die_Bin7Case_Coral6p0_33Wafer_BinmapV3 v3 on v3.LotWafer=d.LotWafer and v3.Cbin=d.ChipSN
             where v3.Bin is not null
         --ReworkBatch 2
-        update d set d.RD_Bin=v3.Bin_V3 from #ToCheckUnits d
+        update d set d.Traveler_Bin=v3.Bin_V3 from #ToCheckUnits d
             join dbo.Die_WrongBin7 v3 on v3.LotWafer=d.LotWafer and v3.Cbin=d.ChipSN
             where v3.Bin=7 and v3.Bin_V3 is not null
         --ReworkBatch 3
-        update d set d.RD_Bin=v3.Bin_V3 from #ToCheckUnits d
+        update d set d.Traveler_Bin=v3.Bin_V3 from #ToCheckUnits d
             join dbo.Die_WrongBin7_82Wafer v3 on v3.LotWafer=d.LotWafer and v3.Cbin=d.ChipSN
             where v3.Bin=7 and v3.Bin_V3 is not null
     end
@@ -105,27 +108,27 @@ BEGIN
             BasePass = cast
             (
                 case
-                    when (p.uec_onchip_low           > s.spec_uec_low            or s.spec_uec_low is null)
-                     and (p.uec_conchip_high         < s.spec_uec_high           or s.spec_uec_high is null)
-                     and (p.uec_onchip_std           < s.spec_std_multiplier     or s.spec_std_multiplier is null)
-                     and (p.onchip_loss_optical_low  > s.spec_loss_low           or s.spec_loss_low is null)
-                     and (p.onchip_loss_optical_high < s.spec_loss_high          or s.spec_loss_high is null)
-                     and (p.loss_range_high          < s.spec_loss_range_high    or s.spec_loss_range_high is null)
-                     and (p.ompd_range_high          < s.spec_ompd_range_high    or s.spec_ompd_range_high is null)
-                     and (p.mpdm_mpds_dev            < s.spec_mpdm_mpds_dev      or s.spec_mpdm_mpds_dev is null)
-                     and (p.ppi_low                  > s.spec_ppi_low            or s.spec_ppi_low is null)
-                     and (p.ppi_high                 < s.spec_ppi_high           or s.spec_ppi_high is null)
-                     and (p.heater_resistance_low    > s.spec_ht_low             or s.spec_ht_low is null)
-                     and (p.heater_resistance_high   < s.spec_ht_high            or s.spec_ht_high is null)
-                     and (p.dark_current_low         > s.spec_dc_low             or s.spec_dc_low is null)
-                     and (p.dark_current_high        < s.spec_dc_high            or s.spec_dc_high is null)
-                     and (p.onchip_loss_mpd_low      > s.spec_mpd_loss_low       or s.spec_mpd_loss_low is null)
-                     and (p.onchip_loss_mpd_high     < s.spec_mpd_loss_high      or s.spec_mpd_loss_high is null)
-                     and (p.mpd_loss_range_high      < s.spec_mpd_loss_range     or s.spec_mpd_loss_range is null)
-                     and (p.uec_te_low              > s.spec_uec_te_low         or s.spec_uec_te_low is null)
-                     and (p.uec_te_high             < s.spec_uec_te_high        or s.spec_uec_te_high is null)
-                     and (p.uec_tm_low              > s.spec_uec_tm_low         or s.spec_uec_tm_low is null)
-                     and (p.uec_tm_high             < s.spec_uec_tm_high        or s.spec_uec_tm_high is null)
+                    when (p.uec_onchip_low           >= s.spec_uec_low            or s.spec_uec_low is null)
+                     and (p.uec_conchip_high         <= s.spec_uec_high           or s.spec_uec_high is null)
+                     and (p.uec_onchip_std           <= s.spec_std_multiplier     or s.spec_std_multiplier is null)
+                     and (p.onchip_loss_optical_low  >= s.spec_loss_low           or s.spec_loss_low is null)
+                     and (p.onchip_loss_optical_high <= s.spec_loss_high          or s.spec_loss_high is null)
+                     and (p.loss_range_high          <= s.spec_loss_range_high    or s.spec_loss_range_high is null)
+                     and (p.ompd_range_high          <= s.spec_ompd_range_high    or s.spec_ompd_range_high is null)
+                     and (p.mpdm_mpds_dev            <= s.spec_mpdm_mpds_dev      or s.spec_mpdm_mpds_dev is null)
+                     and (p.ppi_low                  >= s.spec_ppi_low            or s.spec_ppi_low is null)
+                     and (p.ppi_high                 <= s.spec_ppi_high           or s.spec_ppi_high is null)
+                     and (p.heater_resistance_low    >= s.spec_ht_low             or s.spec_ht_low is null)
+                     and (p.heater_resistance_high   <= s.spec_ht_high            or s.spec_ht_high is null)
+                     and (p.dark_current_low         >= s.spec_dc_low             or s.spec_dc_low is null)
+                     and (p.dark_current_high        <= s.spec_dc_high            or s.spec_dc_high is null)
+                     and (p.onchip_loss_mpd_low      >= s.spec_mpd_loss_low       or s.spec_mpd_loss_low is null)
+                     and (p.onchip_loss_mpd_high     <= s.spec_mpd_loss_high      or s.spec_mpd_loss_high is null)
+                     and (p.mpd_loss_range_high      <= s.spec_mpd_loss_range     or s.spec_mpd_loss_range is null)
+                     and (p.uec_te_low              >= s.spec_uec_te_low         or s.spec_uec_te_low is null)
+                     and (p.uec_te_high             <= s.spec_uec_te_high        or s.spec_uec_te_high is null)
+                     and (p.uec_tm_low              >= s.spec_uec_tm_low         or s.spec_uec_tm_low is null)
+                     and (p.uec_tm_high             <= s.spec_uec_tm_high        or s.spec_uec_tm_high is null)
                     then 1 else 0
                 end
                 as bit
@@ -221,15 +224,51 @@ BEGIN
             )
     end
 
-    --update z set z.RD_Bin=1 from #ToCheckUnits z where z.RD_Bin in (4,5)
+    if @ProductFamily='Coral4p1' and @SpecVersion='1.1_F2V3'
+    begin
+        update t
+           set t.MES_Bin  = 7
+            from #ToCheckUnits t
+            join dbo.LotWafer_Die_CP_Parameter b on b.LotWafer = t.LotWafer and t.ChipSN=b.ChipSN
+            where t.MES_Bin=1 and b.onchip_loss_mpd_high > 10.5
+    end
 
-	select z.ProductFamily, z.LotWafer, z.RD_Bin, z.MES_Bin, count(1) as Qty
-        , case when z.RD_Bin=z.MES_Bin then 'Pass'
-        when z.ProductFamily='Coral4p1' and z.RD_Bin in (4,5) and z.MES_Bin in (1,7) then 'Pass'
-        when z.ProductFamily='Coral6p0' and z.RD_Bin in (4,5) and z.MES_Bin in (1) then 'Pass'
+    if @ProductFamily='Coral3p1' and @SpecVersion='1.2_F2V1'
+    begin
+        update t
+           set t.MES_Bin = 7
+            from #ToCheckUnits t
+            where t.MES_Bin=1 and left(t.ChipSN,3) not in (
+            'E01',
+            'E02',
+            'E03',
+            'E04',
+            'E05',
+            'E06',
+            'G01',
+            'G02',
+            'G03',
+            'G04',
+            'G05',
+            'G06',
+            'H02',
+            'H03',
+            'H04',
+            'H05',
+            'I03',
+            'I04'
+            )
+    end
+
+    --update z set z.Traveler_Bin=1 from #ToCheckUnits z where z.Traveler_Bin in (4,5)
+
+	select z.ProductFamily, z.LotWafer, z.Traveler_Bin, z.MES_Bin, count(1) as Qty
+        , case when z.Traveler_Bin=z.MES_Bin then 'Pass'
+        when z.ProductFamily in ('Coral3p1','Coral4p1') and z.Traveler_Bin in (4,5) and z.MES_Bin in (1,7) then 'Pass'
+        when z.Traveler_Bin in (4,5) and z.MES_Bin in (1) then 'Pass'
             else 'Fail'
             end as CheckResult
 		from #ToCheckUnits z
-        group by z.ProductFamily, z.LotWafer, z.RD_Bin, z.MES_Bin
+        group by z.ProductFamily, z.LotWafer, z.Traveler_Bin, z.MES_Bin
 
 END;

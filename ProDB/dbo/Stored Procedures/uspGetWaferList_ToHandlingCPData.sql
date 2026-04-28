@@ -6,6 +6,8 @@
 -- Notes:
 
 Change Log:
+2026-04-28 JC: 过滤研发Coral2p2产品
+2026-04-23 JC: 过滤研发Coral2p2产品
 2026-02-12 JC: 增加Weight & TimeFlag， 优先处理已出货的产品； 优先处理最近包装或最近出货的产品
 2026-01-28 JC: 增加Wafer选取范围：包装结束时间 or 包装开始时间 or dbo.Shipping_list
 2026-01-27 JC: 条件改成：存在 w.测试结束时间 且 之前未处理过
@@ -31,6 +33,8 @@ BEGIN
 		from dbo.Shipping_list s
 		left join dbo.CPTest_File f on s.Lotid_Wafer=f.LotWafer
 		where f.LotWafer is null and s.Lotid_Wafer not like '%BIN%'
+		--and s.Lotid_Wafer not in ('LN47569-W03','LN47569-W04','LN47569-W02') --研发Coral2p2产品
+		and s.Project not in ('Coral2p2','Coral2.2') --研发Coral2p2产品
 		group by s.Project, s.Lotid_Wafer
 
 	select top 100 z.ProductModel, z.LotWafer, z.Weight, z.TimeFlag

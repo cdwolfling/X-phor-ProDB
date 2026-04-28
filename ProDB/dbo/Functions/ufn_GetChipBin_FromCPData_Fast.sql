@@ -12,6 +12,7 @@ select *, dbo.ufn_GetChipBin_FromCPData_Fast(w82.LotWafer,w82.Cbin) as MES_Bin f
     where w82.Bin=7 and w82.Bin_V3<>dbo.ufn_GetChipBin_FromCPData_Fast(w82.LotWafer,w82.Cbin)
 
 Change Log:
+2026-04-23 JC: Add Debug lines
 2026-04-22 JC: Add Debug lines
 2026-04-17 JC: Bugfix.
 2026-04-16 JC: 基于ufn_GetChipBin_FromCPData修改而来， 使用dbo.LotWafer_Die_CP_Parameter提高效率
@@ -148,30 +149,54 @@ BEGIN
     -- 6. Bin 判定
     -- =============================================
     DECLARE @BasePass bit = 0;
-    IF (@uec_low>@spec_uec_low or @spec_uec_low is null)
-       AND (@uec_high<@spec_uec_high or @spec_uec_high is null)
-       AND (@std_multiplier<@spec_std_multiplier or @spec_std_multiplier is null)
-       AND (@loss_low>@spec_loss_low or @spec_loss_low is null)
-       AND (@loss_high<@spec_loss_high or @spec_loss_high is null)
-       AND (@loss_range_high<@spec_loss_range_high or @spec_loss_range_high is null)
-       AND (@ompd_range_high<@spec_ompd_range_high or @spec_ompd_range_high is null)
-       AND (@mpdm_mpds_dev<@spec_mpdm_mpds_dev or @spec_mpdm_mpds_dev is null)
-       AND (@ppi_low>@spec_ppi_low or @spec_ppi_low is null)
-       AND (@ppi_high<@spec_ppi_high or @spec_ppi_high is null)
-       AND (@ht_low>@spec_ht_low or @spec_ht_low is null)
-       AND (@ht_high<@spec_ht_high or @spec_ht_high is null)
-       AND (@dc_low>@spec_dc_low or @spec_dc_low is null)
-       AND (@dc_high<@spec_dc_high or @spec_dc_high is null)
-       AND (@mpd_loss_low>@spec_mpd_loss_low or @spec_mpd_loss_low is null)
-       AND (@mpd_loss_high<@spec_mpd_loss_high or @spec_mpd_loss_high is null)
-       AND (@mpd_loss_range<@spec_mpd_loss_range or @spec_mpd_loss_range is null)
-       AND (@uec_te_low>@spec_uec_te_low or @spec_uec_te_low is null)
-       AND (@uec_te_high<@spec_uec_te_high or @spec_uec_te_high is null)
-       AND (@uec_tm_low>@spec_uec_tm_low or @spec_uec_tm_low is null)
-       AND (@uec_tm_high<@spec_uec_tm_high or @spec_uec_tm_high is null)
+    IF (@uec_low>=@spec_uec_low or @spec_uec_low is null)
+       AND (@uec_high<=@spec_uec_high or @spec_uec_high is null)
+       AND (@std_multiplier<=@spec_std_multiplier or @spec_std_multiplier is null)
+       AND (@loss_low>=@spec_loss_low or @spec_loss_low is null)
+       AND (@loss_high<=@spec_loss_high or @spec_loss_high is null)
+       AND (@loss_range_high<=@spec_loss_range_high or @spec_loss_range_high is null)
+       AND (@ompd_range_high<=@spec_ompd_range_high or @spec_ompd_range_high is null)
+       AND (@mpdm_mpds_dev<=@spec_mpdm_mpds_dev or @spec_mpdm_mpds_dev is null)
+       AND (@ppi_low>=@spec_ppi_low or @spec_ppi_low is null)
+       AND (@ppi_high<=@spec_ppi_high or @spec_ppi_high is null)
+       AND (@ht_low>=@spec_ht_low or @spec_ht_low is null)
+       AND (@ht_high<=@spec_ht_high or @spec_ht_high is null)
+       AND (@dc_low>=@spec_dc_low or @spec_dc_low is null)
+       AND (@dc_high<=@spec_dc_high or @spec_dc_high is null)
+       AND (@mpd_loss_low>=@spec_mpd_loss_low or @spec_mpd_loss_low is null)
+       AND (@mpd_loss_high<=@spec_mpd_loss_high or @spec_mpd_loss_high is null)
+       AND (@mpd_loss_range<=@spec_mpd_loss_range or @spec_mpd_loss_range is null)
+       AND (@uec_te_low>=@spec_uec_te_low or @spec_uec_te_low is null)
+       AND (@uec_te_high<=@spec_uec_te_high or @spec_uec_te_high is null)
+       AND (@uec_tm_low>=@spec_uec_tm_low or @spec_uec_tm_low is null)
+       AND (@uec_tm_high<=@spec_uec_tm_high or @spec_uec_tm_high is null)
     BEGIN
         SET @BasePass = 1
     END
+    
+    /*
+    IF NOT (@uec_low>=@spec_uec_low or @spec_uec_low is null) print 'FAIL: (@uec_low>=@spec_uec_low or @spec_uec_low is null)'
+    IF NOT (@uec_high<=@spec_uec_high or @spec_uec_high is null) print 'FAIL: (@uec_high<=@spec_uec_high or @spec_uec_high is null)'
+    IF NOT (@std_multiplier<=@spec_std_multiplier or @spec_std_multiplier is null) print 'FAIL: (@std_multiplier<=@spec_std_multiplier or @spec_std_multiplier is null)'
+    IF NOT (@loss_low>=@spec_loss_low or @spec_loss_low is null) print 'FAIL: (@loss_low>=@spec_loss_low or @spec_loss_low is null)'
+    IF NOT (@loss_high<=@spec_loss_high or @spec_loss_high is null) print 'FAIL: (@loss_high<=@spec_loss_high or @spec_loss_high is null)'
+    IF NOT (@loss_range_high<=@spec_loss_range_high or @spec_loss_range_high is null) print 'FAIL: (@loss_range_high<=@spec_loss_range_high or @spec_loss_range_high is null)'
+    IF NOT (@ompd_range_high<=@spec_ompd_range_high or @spec_ompd_range_high is null) print 'FAIL: (@ompd_range_high<=@spec_ompd_range_high or @spec_ompd_range_high is null)'
+    IF NOT (@mpdm_mpds_dev<=@spec_mpdm_mpds_dev or @spec_mpdm_mpds_dev is null) print 'FAIL: (@mpdm_mpds_dev<=@spec_mpdm_mpds_dev or @spec_mpdm_mpds_dev is null)'
+    IF NOT (@ppi_low>=@spec_ppi_low or @spec_ppi_low is null) print 'FAIL: (@ppi_low>=@spec_ppi_low or @spec_ppi_low is null)'
+    IF NOT (@ppi_high<=@spec_ppi_high or @spec_ppi_high is null) print 'FAIL: (@ppi_high<=@spec_ppi_high or @spec_ppi_high is null)'
+    IF NOT (@ht_low>=@spec_ht_low or @spec_ht_low is null) print 'FAIL: (@ht_low>=@spec_ht_low or @spec_ht_low is null)'
+    IF NOT (@ht_high<=@spec_ht_high or @spec_ht_high is null) print 'FAIL: (@ht_high<=@spec_ht_high or @spec_ht_high is null)'
+    IF NOT (@dc_low>=@spec_dc_low or @spec_dc_low is null) print 'FAIL: (@dc_low>=@spec_dc_low or @spec_dc_low is null)'
+    IF NOT (@dc_high<=@spec_dc_high or @spec_dc_high is null) print 'FAIL: (@dc_high<=@spec_dc_high or @spec_dc_high is null)'
+    IF NOT (@mpd_loss_low>=@spec_mpd_loss_low or @spec_mpd_loss_low is null) print 'FAIL: (@mpd_loss_low>=@spec_mpd_loss_low or @spec_mpd_loss_low is null)'
+    IF NOT (@mpd_loss_high<=@spec_mpd_loss_high or @spec_mpd_loss_high is null) print 'FAIL: (@mpd_loss_high<=@spec_mpd_loss_high or @spec_mpd_loss_high is null)'
+    IF NOT (@mpd_loss_range<=@spec_mpd_loss_range or @spec_mpd_loss_range is null) print 'FAIL: (@mpd_loss_range<=@spec_mpd_loss_range or @spec_mpd_loss_range is null)'
+    IF NOT (@uec_te_low>=@spec_uec_te_low or @spec_uec_te_low is null) print 'FAIL: (@uec_te_low>=@spec_uec_te_low or @spec_uec_te_low is null)'
+    IF NOT (@uec_te_high<=@spec_uec_te_high or @spec_uec_te_high is null) print 'FAIL: (@uec_te_high<=@spec_uec_te_high or @spec_uec_te_high is null)'
+    IF NOT (@uec_tm_low>=@spec_uec_tm_low or @spec_uec_tm_low is null) print 'FAIL: (@uec_tm_low>=@spec_uec_tm_low or @spec_uec_tm_low is null)'
+    IF NOT (@uec_tm_high<=@spec_uec_tm_high or @spec_uec_tm_high is null) print 'FAIL: (@uec_tm_high<=@spec_uec_tm_high or @spec_uec_tm_high is null)'
+    */
 
     IF @BasePass = 1 AND @ProductFamily='Coral6p0' AND @er_low > 23 AND @er_low <= 24
         RETURN 7

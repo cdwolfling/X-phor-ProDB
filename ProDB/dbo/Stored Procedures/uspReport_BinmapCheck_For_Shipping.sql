@@ -9,6 +9,8 @@ exec [dbo].[uspReport_BinmapCheck_For_Shipping] @ProductFamily='Coral6p0', @Ship
 exec [dbo].[uspReport_BinmapCheck_For_Shipping] @ProductFamily='Coral6p0', @Ship_date='2026-04-07', @Customer_Code='QD01000'
 
 Change Log:
+2026-04-23 JC: ">" --> ">="
+2026-04-22 JC: Use left join in line 64/65
 2026-04-21 JC: Add Coral4p5. Add input @WaferList
 2026-04-17 JC: Performance improved.
 2026-04-09 JC: Replace ufn_GetChipBin_FromCPData with ufn_GetChipBin_FromCPData_Coral6p0
@@ -30,6 +32,7 @@ BEGIN
     --declare @Ship_date date='2026-04-07'
     --declare @Customer_Code varchar(15)='HK02004'
     --declare @PO varchar(25)='Z20251028-01'
+    --declare @WaferList varchar(max)=null
     
     declare @ProductFamily_B varchar(10)
     select @ProductFamily_B=replace(@ProductFamily,'p','.')
@@ -53,8 +56,8 @@ BEGIN
 	    insert #ToCheckUnits(Ship_date, Customer_Code, PO, Lot_Wafer_Box_ID, ProductFamily, LotWafer, ChipSN, ShippingBin)
 		    select s.Ship_date, s.Customer_Code, PO, s.Lot_Wafer_Box_ID, tray.ProductModel, tray.LotWafer, tray.ChipSN, d.Bin--, dbo.ufn_GetChipBin_FromCPData_Coral6p0(tray.LotWafer,tray.ChipSN)
 		    from dbo.Shipping_list s
-		    join dbo.vw_TrayMap tray on s.Lot_Wafer_Box_ID=tray.LotWaferTrayKey
-            join dbo.Die d on tray.LotWafer=d.LotWafer and tray.ChipSN=d.Cbin
+		    left join dbo.vw_TrayMap tray on s.Lot_Wafer_Box_ID=tray.LotWaferTrayKey
+            left join dbo.Die d on tray.LotWafer=d.LotWafer and tray.ChipSN=d.Cbin
 		    where s.Ship_date between @Ship_date and @Ship_date and s.Customer_Code = @Customer_Code
             and (s.PO = @PO or @PO is null)
             and s.Project in (@ProductFamily,@ProductFamily_B)
@@ -122,27 +125,27 @@ BEGIN
             BasePass = cast
             (
                 case
-                    when (p.uec_onchip_low           > s.spec_uec_low            or s.spec_uec_low is null)
-                     and (p.uec_conchip_high         < s.spec_uec_high           or s.spec_uec_high is null)
-                     and (p.uec_onchip_std           < s.spec_std_multiplier     or s.spec_std_multiplier is null)
-                     and (p.onchip_loss_optical_low  > s.spec_loss_low           or s.spec_loss_low is null)
-                     and (p.onchip_loss_optical_high < s.spec_loss_high          or s.spec_loss_high is null)
-                     and (p.loss_range_high          < s.spec_loss_range_high    or s.spec_loss_range_high is null)
-                     and (p.ompd_range_high          < s.spec_ompd_range_high    or s.spec_ompd_range_high is null)
-                     and (p.mpdm_mpds_dev            < s.spec_mpdm_mpds_dev      or s.spec_mpdm_mpds_dev is null)
-                     and (p.ppi_low                  > s.spec_ppi_low            or s.spec_ppi_low is null)
-                     and (p.ppi_high                 < s.spec_ppi_high           or s.spec_ppi_high is null)
-                     and (p.heater_resistance_low    > s.spec_ht_low             or s.spec_ht_low is null)
-                     and (p.heater_resistance_high   < s.spec_ht_high            or s.spec_ht_high is null)
-                     and (p.dark_current_low         > s.spec_dc_low             or s.spec_dc_low is null)
-                     and (p.dark_current_high        < s.spec_dc_high            or s.spec_dc_high is null)
-                     and (p.onchip_loss_mpd_low      > s.spec_mpd_loss_low       or s.spec_mpd_loss_low is null)
-                     and (p.onchip_loss_mpd_high     < s.spec_mpd_loss_high      or s.spec_mpd_loss_high is null)
-                     and (p.mpd_loss_range_high      < s.spec_mpd_loss_range     or s.spec_mpd_loss_range is null)
-                     and (p.uec_te_low              > s.spec_uec_te_low         or s.spec_uec_te_low is null)
-                     and (p.uec_te_high             < s.spec_uec_te_high        or s.spec_uec_te_high is null)
-                     and (p.uec_tm_low              > s.spec_uec_tm_low         or s.spec_uec_tm_low is null)
-                     and (p.uec_tm_high             < s.spec_uec_tm_high        or s.spec_uec_tm_high is null)
+                    when (p.uec_onchip_low           >= s.spec_uec_low            or s.spec_uec_low is null)
+                     and (p.uec_conchip_high         <= s.spec_uec_high           or s.spec_uec_high is null)
+                     and (p.uec_onchip_std           <= s.spec_std_multiplier     or s.spec_std_multiplier is null)
+                     and (p.onchip_loss_optical_low  >= s.spec_loss_low           or s.spec_loss_low is null)
+                     and (p.onchip_loss_optical_high <= s.spec_loss_high          or s.spec_loss_high is null)
+                     and (p.loss_range_high          <= s.spec_loss_range_high    or s.spec_loss_range_high is null)
+                     and (p.ompd_range_high          <= s.spec_ompd_range_high    or s.spec_ompd_range_high is null)
+                     and (p.mpdm_mpds_dev            <= s.spec_mpdm_mpds_dev      or s.spec_mpdm_mpds_dev is null)
+                     and (p.ppi_low                  >= s.spec_ppi_low            or s.spec_ppi_low is null)
+                     and (p.ppi_high                 <= s.spec_ppi_high           or s.spec_ppi_high is null)
+                     and (p.heater_resistance_low    >= s.spec_ht_low             or s.spec_ht_low is null)
+                     and (p.heater_resistance_high   <= s.spec_ht_high            or s.spec_ht_high is null)
+                     and (p.dark_current_low         >= s.spec_dc_low             or s.spec_dc_low is null)
+                     and (p.dark_current_high        <= s.spec_dc_high            or s.spec_dc_high is null)
+                     and (p.onchip_loss_mpd_low      >= s.spec_mpd_loss_low       or s.spec_mpd_loss_low is null)
+                     and (p.onchip_loss_mpd_high     <= s.spec_mpd_loss_high      or s.spec_mpd_loss_high is null)
+                     and (p.mpd_loss_range_high      <= s.spec_mpd_loss_range     or s.spec_mpd_loss_range is null)
+                     and (p.uec_te_low              >= s.spec_uec_te_low         or s.spec_uec_te_low is null)
+                     and (p.uec_te_high             <= s.spec_uec_te_high        or s.spec_uec_te_high is null)
+                     and (p.uec_tm_low              >= s.spec_uec_tm_low         or s.spec_uec_tm_low is null)
+                     and (p.uec_tm_high             <= s.spec_uec_tm_high        or s.spec_uec_tm_high is null)
                     then 1 else 0
                 end
                 as bit

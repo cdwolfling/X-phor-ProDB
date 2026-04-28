@@ -10,8 +10,11 @@ exec [dbo].[uspReport_InsertionLossCheck_For_Shipping] @Ship_date='2026-02-06', 
 exec [dbo].[uspReport_InsertionLossCheck_For_Shipping] @Ship_date='2026-03-06', @Customer_Code='CD04', @PO='/'
 exec [dbo].[uspReport_InsertionLossCheck_For_Shipping] @Ship_date='2026-04-07', @Customer_Code='SZ04000'
 exec [dbo].[uspReport_InsertionLossCheck_For_Shipping] @Ship_date='2026-04-07', @Customer_Code='SZ04000', @PO='81000012938'
+exec [dbo].[uspReport_InsertionLossCheck_For_Shipping] @Ship_date='2026-04-25', @Customer_Code='JM01000'
 
 Change Log:
+2026-04-25 JC: Refer uspGenerateShippingData_ToDoList: Only show the result of 
+    "join dbo.Config_Ship_InsertionLoss_Customer and dbo.Config_Ship_InsertionLoss_ProductModel"
 2026-04-08 JC: output ReferenceProject, ReferencePN
 2026-04-07 JC: Base [dbo].[uspGenerateShippingData]
 -- =============================================
@@ -46,6 +49,8 @@ BEGIN
     begin
         insert #PO_List(PO)
             select s.PO from dbo.Shipping_list s
+		    join dbo.Config_Ship_InsertionLoss_Customer c on s.Customer_Code=c.Customer_Code
+		    join dbo.Config_Ship_InsertionLoss_ProductModel m on replace(s.Project,'.','p')=m.ProductModel
 		    where s.Ship_date between @Ship_date and @Ship_date and s.Customer_Code = @Customer_Code
             group by s.PO
     end
@@ -70,6 +75,8 @@ BEGIN
     insert #InsertionLossCheck_Summary(Ship_date,Customer_Code,PO,Qty, testdataQty, ReferenceProject, ReferencePN)
 	    select s.Ship_date, s.Customer_Code, s.PO, sum(s.Ship_Qty) as Qty,0,max(s.Project),max(s.PN)
 		from dbo.Shipping_list s
+		join dbo.Config_Ship_InsertionLoss_Customer c on s.Customer_Code=c.Customer_Code
+		join dbo.Config_Ship_InsertionLoss_ProductModel m on replace(s.Project,'.','p')=m.ProductModel
 		where s.Ship_date between @Ship_date and @Ship_date and s.Customer_Code = @Customer_Code
         and (s.PO=@PO or @PO is null)
         group by s.Ship_date, s.Customer_Code, s.PO
