@@ -7,6 +7,7 @@
 -- Notes:
 exec [dbo].[uspReport_BinmapCheck_For_Shipping] @ProductFamily='Coral6p0', @Ship_date='2026-04-07', @Customer_Code='SZ04000'
 exec [dbo].[uspReport_BinmapCheck_For_Shipping] @ProductFamily='Coral6p0', @Ship_date='2026-04-07', @Customer_Code='QD01000'
+exec [dbo].[uspReport_BinmapCheck_For_Shipping] @ProductFamily='Coral4p1', @Ship_date='2026-04-29', @Customer_Code='WH03003'
 
 Change Log:
 2026-04-23 JC: ">" --> ">="
@@ -176,9 +177,14 @@ BEGIN
        set t.BasePass = b.BasePass,
            t.MES_Bin  = b.MES_Bin
     from #ToCheckUnits t
-    join BinCTE b
-      on b.LotWafer = t.LotWafer
-     and b.ChipSN   = t.ChipSN;
+    join dbo.LotWafer_WLT_SpecVersion s on t.LotWafer=s.LotWafer
+    join BinCTE b on b.LotWafer = t.LotWafer and b.ChipSN   = t.ChipSN
+    where s.LotWafer is null
+
+    update t
+       set t.MES_Bin  = dbo.ufn_GetChipBin_FromCPData_Fast_WithSpecVersion(t.LotWafer,t.ChipSN,s.ProductFamilySpecId)
+    from #ToCheckUnits t
+    join dbo.LotWafer_WLT_SpecVersion s on t.LotWafer=s.LotWafer
 
 	select z.Ship_date, z.Customer_Code, z.PO, z.ShippingBin, z.MES_Bin as MESBin, count(1) as Qty
         , case when z.ShippingBin=z.MES_Bin then 'Pass' else 'Fail' end as CheckResult

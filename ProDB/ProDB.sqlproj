@@ -236,6 +236,8 @@
     <Build Include="dbo\Tables\Coral4p1_F2Issue_V1.sql" />
     <Build Include="dbo\Stored Procedures\uspReport_BinmapCheck.sql" />
     <Build Include="dbo\Tables\LotWafer_GS.sql" />
+    <Build Include="dbo\Tables\LotWafer_WLT_SpecVersion.sql" />
+    <Build Include="dbo\Functions\ufn_GetChipBin_FromCPData_Fast_WithSpecVersion.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Project2DEV.scmp" />
