@@ -10,6 +10,7 @@ exec [dbo].[uspReport_BinmapCheck_For_Shipping] @ProductFamily='Coral6p0', @Ship
 exec [dbo].[uspReport_BinmapCheck_For_Shipping] @ProductFamily='Coral4p1', @Ship_date='2026-04-29', @Customer_Code='WH03003'
 
 Change Log:
+2026-04-30 JC: ">" --> ">="
 2026-04-23 JC: ">" --> ">="
 2026-04-22 JC: Use left join in line 64/65
 2026-04-21 JC: Add Coral4p5. Add input @WaferList
@@ -114,7 +115,7 @@ BEGIN
         group by v.ProductFamily;
     create unique clustered index IX_Spec on #Spec(ProductFamily);
     
-    -- 3. Update BasePass and MES_Bin
+    -- 3.1 Update BasePass and MES_Bin for active SpecVersion
     ;with PassCTE as
     (
         select
@@ -152,11 +153,13 @@ BEGIN
                 as bit
             )
         from #ToCheckUnits t
+        left join dbo.LotWafer_WLT_SpecVersion spec on t.LotWafer=spec.LotWafer
         left join dbo.LotWafer_Die_CP_Parameter p
             on p.LotWafer = t.LotWafer
            and p.ChipSN   = t.ChipSN
         join #Spec s
             on s.ProductFamily = t.ProductFamily
+        where spec.LotWafer is null
     ),
     BinCTE as
     (
@@ -177,15 +180,17 @@ BEGIN
        set t.BasePass = b.BasePass,
            t.MES_Bin  = b.MES_Bin
     from #ToCheckUnits t
-    join dbo.LotWafer_WLT_SpecVersion s on t.LotWafer=s.LotWafer
+    left join dbo.LotWafer_WLT_SpecVersion s on t.LotWafer=s.LotWafer
     join BinCTE b on b.LotWafer = t.LotWafer and b.ChipSN   = t.ChipSN
     where s.LotWafer is null
-
+    
+    -- 3.2 Update BasePass and MES_Bin for non-active SpecVersion
     update t
        set t.MES_Bin  = dbo.ufn_GetChipBin_FromCPData_Fast_WithSpecVersion(t.LotWafer,t.ChipSN,s.ProductFamilySpecId)
     from #ToCheckUnits t
     join dbo.LotWafer_WLT_SpecVersion s on t.LotWafer=s.LotWafer
-
+    
+    -- 4 Output
 	select z.Ship_date, z.Customer_Code, z.PO, z.ShippingBin, z.MES_Bin as MESBin, count(1) as Qty
         , case when z.ShippingBin=z.MES_Bin then 'Pass' else 'Fail' end as CheckResult
 		from #ToCheckUnits z
