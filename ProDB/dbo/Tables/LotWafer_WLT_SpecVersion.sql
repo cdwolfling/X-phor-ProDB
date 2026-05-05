@@ -9,3 +9,8 @@
     CONSTRAINT [FK_LotWafer_WLT_SpecVersion_ProductFamilySpec] FOREIGN KEY ([ProductFamilySpecId]) REFERENCES [spec].[ProductFamilySpec] ([ProductFamilySpecId])
 );
 
+
+GO
+CREATE UNIQUE NONCLUSTERED INDEX [IX_LotWafer_WLT_SpecVersion_LotWafer]
+    ON [dbo].[LotWafer_WLT_SpecVersion]([LotWafer] ASC);
+

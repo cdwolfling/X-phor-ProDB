@@ -238,6 +238,7 @@
     <Build Include="dbo\Tables\LotWafer_GS.sql" />
     <Build Include="dbo\Tables\LotWafer_WLT_SpecVersion.sql" />
     <Build Include="dbo\Functions\ufn_GetChipBin_FromCPData_Fast_WithSpecVersion.sql" />
+    <Build Include="dbo\Tables\AllowedUser.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Project2DEV.scmp" />

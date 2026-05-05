@@ -9,8 +9,12 @@
     [OQCTrackOutTime] DATETIME     NULL,
     [Cdt]             DATETIME     CONSTRAINT [DF_TrayMapHeader_Cdt] DEFAULT (getdate()) NULL,
     [Udt]             DATETIME     CONSTRAINT [DF_TrayMapHeader_Udt] DEFAULT (getdate()) NULL,
+    [AOITrackInTime]  DATETIME     NULL,
+    [AOITrackOutTime] DATETIME     NULL,
     CONSTRAINT [PK_TrayMapHeader] PRIMARY KEY CLUSTERED ([TrayMapId] ASC)
 );
+
+
 
 
 
