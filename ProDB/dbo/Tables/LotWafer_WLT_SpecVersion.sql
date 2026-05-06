@@ -5,9 +5,12 @@
     [ProductFamilySpecId] INT          NOT NULL,
     [Cdt]                 DATETIME     CONSTRAINT [DF_LotWafer_WLT_SpecVersion_Cdt] DEFAULT (getdate()) NULL,
     [Udt]                 DATETIME     CONSTRAINT [DF_LotWafer_WLT_SpecVersion_Udt] DEFAULT (getdate()) NULL,
+    [UserID]              INT          NULL,
     CONSTRAINT [PK_LotWafer_WLT_SpecVersion] PRIMARY KEY CLUSTERED ([ID] ASC),
     CONSTRAINT [FK_LotWafer_WLT_SpecVersion_ProductFamilySpec] FOREIGN KEY ([ProductFamilySpecId]) REFERENCES [spec].[ProductFamilySpec] ([ProductFamilySpecId])
 );
+
+
 
 
 GO
