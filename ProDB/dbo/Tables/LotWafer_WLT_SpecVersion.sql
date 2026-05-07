@@ -13,7 +13,33 @@
 
 
 
+
+
 GO
 CREATE UNIQUE NONCLUSTERED INDEX [IX_LotWafer_WLT_SpecVersion_LotWafer]
     ON [dbo].[LotWafer_WLT_SpecVersion]([LotWafer] ASC);
+
+
+GO
+GRANT UPDATE
+    ON OBJECT::[dbo].[LotWafer_WLT_SpecVersion] TO [Production]
+    AS [dbo];
+
+
+GO
+GRANT SELECT
+    ON OBJECT::[dbo].[LotWafer_WLT_SpecVersion] TO [Production]
+    AS [dbo];
+
+
+GO
+GRANT INSERT
+    ON OBJECT::[dbo].[LotWafer_WLT_SpecVersion] TO [Production]
+    AS [dbo];
+
+
+GO
+GRANT DELETE
+    ON OBJECT::[dbo].[LotWafer_WLT_SpecVersion] TO [Production]
+    AS [dbo];
 

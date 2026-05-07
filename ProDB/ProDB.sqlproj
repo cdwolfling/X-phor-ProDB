@@ -239,6 +239,8 @@
     <Build Include="dbo\Tables\LotWafer_WLT_SpecVersion.sql" />
     <Build Include="dbo\Functions\ufn_GetChipBin_FromCPData_Fast_WithSpecVersion.sql" />
     <Build Include="dbo\Tables\AllowedUser.sql" />
+    <Build Include="dbo\Tables\LotWafer_WLT_SpecVersion_History.sql" />
+    <Build Include="dbo\Stored Procedures\uspUpdateWaferAfterSaveBinmap.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Project2DEV.scmp" />
