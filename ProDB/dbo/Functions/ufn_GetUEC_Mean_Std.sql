@@ -4,6 +4,7 @@ Create by Jackiech on 2026-04-02
 SELECT mean, std FROM dbo.ufn_GetUEC_Mean_Std('LN41477-W01')
 
 Change Log:
+2026-05-08 JC: Add UEC_Onchip filter: (0,100)
 2026-04-21 JC: Change @LotWafer to VARCHAR(11)
 2026-04-04 JC: Remove output CPFileTime
 2026-04-04 JC: Add " AND v.isRecent=1"; Add output CPFileTime
@@ -15,4 +16,5 @@ RETURN (
     SELECT AVG(v.UEC_Onchip) AS mean, STDEVP(v.UEC_Onchip) AS std--, max(v.FileModifiedTime) as CPFileTime
     FROM dbo.vw_CPTestData v
     WHERE v.LotWafer = @LotWafer AND v.isRecent=1
+    AND v.UEC_Onchip > 0 AND  v.UEC_Onchip < 100
 )

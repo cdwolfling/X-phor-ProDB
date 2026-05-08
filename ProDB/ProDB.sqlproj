@@ -241,6 +241,9 @@
     <Build Include="dbo\Tables\AllowedUser.sql" />
     <Build Include="dbo\Tables\LotWafer_WLT_SpecVersion_History.sql" />
     <Build Include="dbo\Stored Procedures\uspUpdateWaferAfterSaveBinmap.sql" />
+    <Build Include="dbo\Tables\Config_Ship_MpdlossMedianControl_Customer.sql" />
+    <Build Include="dbo\Functions\ufn_GetMpdLossMedian.sql" />
+    <Build Include="dbo\Functions\ufn_Coral4p5_GetMpdLossMedian.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Project2DEV.scmp" />

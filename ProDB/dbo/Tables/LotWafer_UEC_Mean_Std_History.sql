@@ -10,6 +10,8 @@
     [UpdateUser]         [sysname]    CONSTRAINT [DF_LotWafer_UEC_Mean_Std_UpdateUser] DEFAULT (original_login()) NOT NULL,
     [UpdateDate]         DATETIME     CONSTRAINT [DF_LotWafer_UEC_Mean_Std_UpdateDate] DEFAULT (getdate()) NOT NULL,
     [UpdateHost]         VARCHAR (64) CONSTRAINT [DF_LotWafer_UEC_Mean_Std_UpdateHost] DEFAULT (host_name()) NOT NULL,
+    [MpdLossMedian]      FLOAT (53)   NULL,
+    [ProductFamily]      VARCHAR (20) NULL,
     CONSTRAINT [PK_LotWafer_UEC_Mean_Std_History] PRIMARY KEY CLUSTERED ([History_ID] ASC)
 );
 

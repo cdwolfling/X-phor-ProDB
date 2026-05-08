@@ -8,6 +8,7 @@
 select * from dbo.LotWafer_UEC_Mean_Std d where d.FinishDieParameter=0
 
 Change Log:
+2026-05-08 JC: Add dbo.LotWafer_UEC_Mean_Std.ProductFamily
 2026-04-27 JC: 改成"先update, 后insert", 避免insert造成PK重复
 2026-04-21 JC: Changed the lookback date to 2025-01-01
 2026-04-20 JC: Changed the lookback period from 40 days to 120 days.
@@ -28,20 +29,21 @@ BEGIN
         LotWafer     VARCHAR(50)   NOT NULL,
         CPFileTime   DATETIME      NOT NULL,
         MeanValue    FLOAT         NULL,
-        StdValue     FLOAT         NULL
+        StdValue     FLOAT         NULL,
+        ProductFamily     varchar(20)         NULL
     );
     INSERT INTO #ToUpdate
     (
         LotWafer,
         CPFileTime,
         MeanValue,
-        StdValue
+        StdValue, ProductFamily
     )
     SELECT
         cp.LotWafer,
         cp.FileModifiedTime,
         ms.mean,
-        ms.std
+        ms.std, cp.ProductModel
     FROM dbo.CPTest_File cp
     JOIN dbo.LotWafer_UEC_Mean_Std u ON cp.LotWafer = u.LotWafer
     OUTER APPLY dbo.ufn_GetUEC_Mean_Std(cp.LotWafer) ms
@@ -53,7 +55,8 @@ BEGIN
            u.Mean       = t.MeanValue,
            u.Std        = t.StdValue,
            u.Udt        = @Now,
-           u.FinishDieParameter        = 0
+           u.FinishDieParameter        = 0,
+           u.ProductFamily        = t.ProductFamily
     FROM dbo.LotWafer_UEC_Mean_Std u
     JOIN #ToUpdate t
         ON u.LotWafer = t.LotWafer;
@@ -64,13 +67,13 @@ BEGIN
         LotWafer,
         CPFileTime,
         Mean,
-        Std
+        Std, ProductFamily
     )
     SELECT
         cp.LotWafer,
         cp.FileModifiedTime,
         ms.mean,
-        ms.std
+        ms.std, cp.ProductModel
     FROM dbo.CPTest_File cp
     LEFT JOIN dbo.LotWafer_UEC_Mean_Std u
         ON cp.LotWafer = u.LotWafer

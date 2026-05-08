@@ -6,13 +6,19 @@
     [Cdt]                DATETIME     CONSTRAINT [DF_LotWafer_UEC_Mean_Std_Cdt] DEFAULT (getdate()) NULL,
     [Udt]                DATETIME     CONSTRAINT [DF_LotWafer_UEC_Mean_Std_Udt] DEFAULT (getdate()) NULL,
     [FinishDieParameter] BIT          CONSTRAINT [DF_LotWafer_UEC_Mean_Std_FinishDieParameter] DEFAULT ((0)) NULL,
+    [MpdLossMedian]      FLOAT (53)   NULL,
+    [ProductFamily]      VARCHAR (20) NULL,
     CONSTRAINT [PK_LotWafer_UEC_Mean_Std] PRIMARY KEY CLUSTERED ([LotWafer] ASC)
 );
+
+
 
 
 GO
 /*
 Change Log:
+2026-05-08 JC: Add ProductFamily
+2026-05-07 JC: Add MpdLossMedian
 */
 CREATE TRIGGER [dbo].[trg_LotWafer_UEC_Mean_Std_Update]
 ON [dbo].[LotWafer_UEC_Mean_Std]
@@ -25,8 +31,8 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM inserted)
     BEGIN
         INSERT INTO dbo.LotWafer_UEC_Mean_Std_History
-               (LotWafer, CPFileTime, Mean, Std, FinishDieParameter)
-        SELECT LotWafer, CPFileTime, Mean, Std, FinishDieParameter
+               (LotWafer, CPFileTime, Mean, Std, FinishDieParameter, MpdLossMedian, ProductFamily)
+        SELECT LotWafer, CPFileTime, Mean, Std, FinishDieParameter, MpdLossMedian, ProductFamily
         FROM deleted;
 
         RETURN;
@@ -44,11 +50,12 @@ BEGIN
                ISNULL(CONVERT(datetime2(0), i.CPFileTime), '19000101') <> ISNULL(CONVERT(datetime2(0), d.CPFileTime), '19000101')
             OR ISNULL(i.Mean,0) <> ISNULL(d.Mean,0)
             OR ISNULL(i.Std,'') <> ISNULL(d.Std,'')
+            OR ISNULL(i.MpdLossMedian,0) <> ISNULL(d.MpdLossMedian,0)
     )
     BEGIN
         INSERT INTO dbo.LotWafer_UEC_Mean_Std_History
-               (LotWafer, CPFileTime, Mean, Std, FinishDieParameter)
-        SELECT LotWafer, CPFileTime, Mean, Std, FinishDieParameter
+               (LotWafer, CPFileTime, Mean, Std, FinishDieParameter, MpdLossMedian, ProductFamily)
+        SELECT LotWafer, CPFileTime, Mean, Std, FinishDieParameter, MpdLossMedian, ProductFamily
         FROM deleted;
     END
 END
