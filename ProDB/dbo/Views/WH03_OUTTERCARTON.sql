@@ -1,11 +1,13 @@
 ﻿
 
+
 /*
 
 Change Log:
+2026-05-13 JC: add configurable Ship_date filter by view; use maintained ship date when available, otherwise keep today-and-after filter.
 2026-02-07 JC: add Site='SH' filter for SH site label printing
 */
-CREATE VIEW [dbo].[WH03_OUTTERCARTON] AS
+CREATE   VIEW [dbo].[WH03_OUTTERCARTON] AS
 SELECT 
     b.Material_PN, 
     b.Description AS [Description],
@@ -44,8 +46,13 @@ FROM
             ORDER BY a.Ship_date DESC
         ) AS rn
     FROM Shipping_list a 
+    CROSS APPLY dbo.ufn_GetLabelViewShipDate('WH03_OUTTERCARTON') cfg
     WHERE a.Customer_Code LIKE 'WH03%'  -- 筛选客户代码为WH03
-    AND a.Ship_date >= CAST(GETDATE() AS DATE)  -- 筛选今天及之后的日期
+    AND (
+        (cfg.ConfigShipDate IS NOT NULL AND a.Ship_date = cfg.ConfigShipDate)
+        OR
+        (cfg.ConfigShipDate IS NULL AND a.Ship_date >= CAST(GETDATE() AS DATE))
+    )
     AND a.Site = 'SH'
 ) AS e
 LEFT JOIN Custom_Information b 
@@ -57,8 +64,13 @@ LEFT JOIN
         SUM(ship_qty) AS Sumqty,
         Carton_ID_Outter
     FROM Shipping_list
+    CROSS APPLY dbo.ufn_GetLabelViewShipDate('WH03_OUTTERCARTON') cfg
     WHERE Customer_Code LIKE 'WH03%'  -- 筛选客户代码为WH03
-    AND Ship_date >= CAST(GETDATE() AS DATE)  -- 确保子查询也筛选今天及之后的日期
+    AND (
+        (cfg.ConfigShipDate IS NOT NULL AND Ship_date = cfg.ConfigShipDate)
+        OR
+        (cfg.ConfigShipDate IS NULL AND Ship_date >= CAST(GETDATE() AS DATE))
+    )
     AND Site = 'SH'
     GROUP BY Carton_ID_Outter
 ) AS f

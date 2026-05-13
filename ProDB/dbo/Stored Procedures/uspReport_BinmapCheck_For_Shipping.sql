@@ -8,8 +8,10 @@
 exec [dbo].[uspReport_BinmapCheck_For_Shipping] @ProductFamily='Coral6p0', @Ship_date='2026-04-07', @Customer_Code='SZ04000'
 exec [dbo].[uspReport_BinmapCheck_For_Shipping] @ProductFamily='Coral6p0', @Ship_date='2026-04-07', @Customer_Code='QD01000'
 exec [dbo].[uspReport_BinmapCheck_For_Shipping] @ProductFamily='Coral4p1', @Ship_date='2026-04-29', @Customer_Code='WH03003'
+exec [dbo].[uspReport_BinmapCheck_For_Shipping] @ProductFamily='Coral3p1', @Ship_date='2025-09-18', @Customer_Code='HK02000'
 
 Change Log:
+2026-05-08 JC: output MpdLossMedian_CheckResult
 2026-04-30 JC: ">" --> ">="
 2026-04-23 JC: ">" --> ">="
 2026-04-22 JC: Use left join in line 64/65
@@ -42,7 +44,7 @@ BEGIN
     -- 1. 准备 #ToCheckUnits 临时表
 	IF OBJECT_ID('tempdb..#ToCheckUnits') IS NOT NULL DROP TABLE #ToCheckUnits
 	create table #ToCheckUnits(Ship_date date, Customer_Code varchar(15), PO varchar(25), Lot_Wafer_Box_ID varchar(20)
-        , ProductFamily varchar(20), LotWafer varchar(11), ChipSN varchar(11), ShippingBin INT, BasePass bit, MES_Bin int)
+        , ProductFamily varchar(20), LotWafer varchar(11), ChipSN varchar(11), ShippingBin INT, BasePass bit, MES_Bin int, needCheck_MpdLossMedian bit, MpdLossMedian_CheckResult bit)
     if @WaferList<>''
     begin
 	    insert #ToCheckUnits(ProductFamily, LotWafer, ChipSN, ShippingBin)
@@ -65,6 +67,13 @@ BEGIN
             and s.Project in (@ProductFamily,@ProductFamily_B)
     end
     create clustered index IX_ToCheckDie on #ToCheckUnits(LotWafer, ChipSN, ProductFamily)
+
+    update t set t.needCheck_MpdLossMedian=1 from #ToCheckUnits t
+        join dbo.Config_Ship_MpdlossMedianControl_Customer c on t.ProductFamily=c.ProductFamily and t.Customer_Code=c.Customer_Code
+    update t set t.MpdLossMedian_CheckResult=1 from #ToCheckUnits t where t.needCheck_MpdLossMedian is null
+    update t set t.MpdLossMedian_CheckResult=1 from #ToCheckUnits t
+        join dbo.LotWafer_UEC_Mean_Std l on t.LotWafer=l.LotWafer and l.MpdLossMedian<10
+        where t.needCheck_MpdLossMedian=1
 	
     -- 1.1 Update ShippingBin for Coral6p0 Bin7Issue
     if exists(select 1 from #ToCheckUnits z where z.ProductFamily='Coral6p0')
@@ -193,8 +202,9 @@ BEGIN
     -- 4 Output
 	select z.Ship_date, z.Customer_Code, z.PO, z.ShippingBin, z.MES_Bin as MESBin, count(1) as Qty
         , case when z.ShippingBin=z.MES_Bin then 'Pass' else 'Fail' end as CheckResult
+        , case when z.MpdLossMedian_CheckResult=1 then 'Pass' else 'Fail' end as MpdLossMedian_CheckResult
 		from #ToCheckUnits z
-        group by z.Ship_date, z.Customer_Code, z.PO, z.ShippingBin, z.MES_Bin
+        group by z.Ship_date, z.Customer_Code, z.PO, z.ShippingBin, z.MES_Bin, z.MpdLossMedian_CheckResult
         ORDER by z.Ship_date, z.Customer_Code, z.PO, z.ShippingBin, z.MES_Bin
 
 END;

@@ -2,13 +2,15 @@
 
 
 
+
 /*
 
 Change Log:
+2026-05-13 JC: add configurable Ship_date filter by view; use maintained ship date when available, otherwise keep today-and-after filter.
 2026-02-07 JC: add Site='SH' filter for SH site label printing
 */
 
-CREATE VIEW [dbo].[v_WH03_BOXLABEL] AS
+CREATE   VIEW [dbo].[v_WH03_BOXLABEL] AS
 SELECT 
     /* 基础物料信息 */
     b.Material_PN,  
@@ -61,8 +63,13 @@ FROM
         a.Customer_Code,  -- 客户代码字段
         a.Customer_Code AS Customer_Code_Filter  -- 用于筛选的客户代码
     FROM Shipping_list a 
+    CROSS APPLY dbo.ufn_GetLabelViewShipDate('v_WH03_BOXLABEL') cfg
     WHERE a.Customer_Code LIKE 'WH03%'  -- 筛选客户代码为WH03
-    AND a.Ship_date >= CAST(GETDATE() AS DATE)  -- 筛选今天及之后的日期
+    AND (
+        (cfg.ConfigShipDate IS NOT NULL AND a.Ship_date = cfg.ConfigShipDate)
+        OR
+        (cfg.ConfigShipDate IS NULL AND a.Ship_date >= CAST(GETDATE() AS DATE))
+    )
     AND a.Site = 'SH'
 ) AS e  
 

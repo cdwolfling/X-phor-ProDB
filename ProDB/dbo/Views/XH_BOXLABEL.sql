@@ -1,12 +1,16 @@
 ﻿
 
+
+
+
 /*
 
 Change Log:
+2026-05-13 JC: add configurable Ship_date filter by view; use maintained ship date when available, otherwise keep today-and-after filter.
 2026-02-07 JC: add Site='SH' filter for SH site label printing
 2025-12-28 JC: use dbo.ufn_YearWeekCode
 */
-CREATE VIEW [dbo].[XH_BOXLABEL] AS 
+CREATE   VIEW [dbo].[XH_BOXLABEL] AS 
 SELECT TOP 100 PERCENT 
     Project,
     PO,
@@ -36,12 +40,17 @@ FROM (
         Carton_ID_Inner
     FROM 
         Shipping_list a 
+        CROSS APPLY dbo.ufn_GetLabelViewShipDate('XH_BOXLABEL') cfg
     LEFT JOIN 
         Custom_Information b 
     ON 
         a.PN = b.pn AND a.Customer_Code = b.customer_code
     WHERE 
-        a.Ship_date >= CAST(GETDATE() AS DATE  ) -- 筛选今天和今天之后的记录
+        (
+            (cfg.ConfigShipDate IS NOT NULL AND a.Ship_date = cfg.ConfigShipDate)
+            OR
+            (cfg.ConfigShipDate IS NULL AND a.Ship_date >= CAST(GETDATE() AS DATE))
+        )
         AND a.Site = 'SH'
 	ORDER BY Carton_ID_Inner ASC
 )

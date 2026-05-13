@@ -244,6 +244,10 @@
     <Build Include="dbo\Tables\Config_Ship_MpdlossMedianControl_Customer.sql" />
     <Build Include="dbo\Functions\ufn_GetMpdLossMedian.sql" />
     <Build Include="dbo\Functions\ufn_Coral4p5_GetMpdLossMedian.sql" />
+    <Build Include="dbo\Tables\Config_Label_View_Date_History.sql" />
+    <Build Include="dbo\Tables\Config_Label_View_Date.sql" />
+    <Build Include="dbo\Functions\ufn_GetLabelViewShipDate.sql" />
+    <Build Include="dbo\Stored Procedures\usp_Save_Label_View_Date.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Project2DEV.scmp" />
