@@ -68,6 +68,7 @@ SELECT * FROM dbo.Die d WHERE LotWafer = 'LN42467-W01'
     ORDER BY Seqid;
 
 Change Log:
+2026-05-13 JC: 兼容@Cols最大到26
 2026-02-03 JC: 兼容Coral4p5/6p5这种 Binmap_X /Retical_X>10的情况
 2025-12-23 JC: 允许Traveler(Microsoft Office)重复导入
 2025-12-18 JC: Add TRANSACTION
@@ -94,6 +95,23 @@ BEGIN
     IF @Binmap IS NULL OR LTRIM(RTRIM(@Binmap)) = N''
     BEGIN
         RAISERROR('Bnmap is empty.', 16, 1);
+        RETURN;
+    END
+    IF @Cols % @Retical_X <> 0
+    BEGIN
+        RAISERROR('@Cols must be divisible by @Retical_X.', 16, 1);
+        RETURN;
+    END
+
+    IF @Rows % @Retical_Y <> 0
+    BEGIN
+        RAISERROR('@Rows must be divisible by @Retical_Y.', 16, 1);
+        RETURN;
+    END
+
+    IF @Cols / @Retical_X > 26
+    BEGIN
+        RAISERROR('Horizontal reticle count exceeds 26; Cbin first letter only supports A-Z.', 16, 1);
         RETURN;
     END
 
@@ -176,7 +194,7 @@ BEGIN
                     -- 第1位: A~J，每个字母重复 Retical_X 次，按 Seqid 顺序循环
                     ----------------------------------------------------------------
                     SUBSTRING(
-                        'ABCDEFGHIJK',  -- 11 个字母
+                        'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
                         (S.ColIndex / @Retical_X) + 1,
                         1
                     ),
