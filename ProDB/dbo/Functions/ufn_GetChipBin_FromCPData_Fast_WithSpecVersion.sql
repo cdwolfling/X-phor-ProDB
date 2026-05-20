@@ -3,6 +3,7 @@ Create by Jackiech on 2026-04-30
 SELECT dbo.ufn_GetChipBin_FromCPData_Fast_WithSpecVersion('LN41477-W01', 'E07-403', 3) AS Bin
 
 Change Log:
+2026-05-15 JC: Add logic for Coral6p3/Coral5p3 to generate bin8; remove Coral3p1 1.2_F2V1 rule
 2026-05-06 JC: fix er check
 2026-04-30 JC: Initial
 */
@@ -276,35 +277,41 @@ BEGIN
             RETURN 7
     end
 
-    if @BasePass = 1 AND @ProductFamily='Coral3p1' and @SpecVersion='1.2_F2V1'
-    begin
-        IF @mpd_loss_high > 10.5 OR left(@ChipSN,3) not in (
-            'E01',
-            'E02',
-            'E03',
-            'E04',
-            'E05',
-            'E06',
-            'G01',
-            'G02',
-            'G03',
-            'G04',
-            'G05',
-            'G06',
-            'H02',
-            'H03',
-            'H04',
-            'H05',
-            'I03',
-            'I04'
-            )
-            RETURN 7
-    end
+    --if @BasePass = 1 AND @ProductFamily='Coral3p1' and @SpecVersion='1.2_F2V1'
+    --begin
+    --    IF @mpd_loss_high > 10.5 OR left(@ChipSN,3) not in (
+    --        'E01',
+    --        'E02',
+    --        'E03',
+    --        'E04',
+    --        'E05',
+    --        'E06',
+    --        'G01',
+    --        'G02',
+    --        'G03',
+    --        'G04',
+    --        'G05',
+    --        'G06',
+    --        'H02',
+    --        'H03',
+    --        'H04',
+    --        'H05',
+    --        'I03',
+    --        'I04'
+    --        )
+    --        RETURN 7
+    --end
 
     IF @BasePass = 1 AND @ProductFamily='Coral6p0' AND @er_low > 23 AND @er_low <= 24
         RETURN 7
 
     IF @BasePass = 1 AND @ProductFamily='Coral6p0' AND @er_low > 24 AND @er_low < @spec_er_low
+        RETURN 8
+
+    IF @BasePass = 1 AND @ProductFamily='Coral6p3' and @SpecVersion='1.0_BIN8' AND @er_low > 24 AND @er_low < @spec_er_low
+        RETURN 8
+
+    IF @BasePass = 1 AND @ProductFamily='Coral5p3' and @SpecVersion='1.2_BIN8' AND @er_low > 24 AND @er_low < @spec_er_low
         RETURN 8
 
     IF @BasePass = 1 AND @er_low >= @spec_er_low

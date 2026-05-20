@@ -10,8 +10,6 @@
 
 
 
-GO
-CREATE NONCLUSTERED INDEX [IX_CPTest_Value_Param]
-    ON [dbo].[CPTest_Value]([ParamId] ASC)
-    INCLUDE([Val], [ChipTestId]);
 
+
+GO

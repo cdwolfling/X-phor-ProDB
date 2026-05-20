@@ -9,6 +9,7 @@ exec [dbo].[uspReport_BinmapCheck] @ProductFamily='Coral4p1', @WaferList='TG1687
 exec [dbo].[uspReport_BinmapCheck] @ProductFamily='Coral4p1', @WaferList='TG16874-W13,TG16874-W05,TG16874-W12', @SpecVersion='1.1_F2V1'
 
 Change Log:
+2026-05-15 JC: Add logic for Coral6p3/Coral5p3 to generate bin8; remove Coral3p1 1.2_F2V1 rule
 2026-04-28 JC: Set dbo.Die as Base, then "left join dbo.CPTest_File"; CLT/ORM规则： 3p1 F2与 4p1 F2一致（即 bin7 作为 pass 参与挑选）
 2026-04-27 JC: Add Coral3p1 1.2_F2V1 rule
 2026-04-27 JC: Add Coral4p1 1.1_F2V3 rule
@@ -150,6 +151,8 @@ BEGIN
                 case
                     when p.BasePass = 1 and p.ProductFamily = 'Coral6p0' and p.ER_low > 23 and p.ER_low <= 24 then 7
                     when p.BasePass = 1 and p.ProductFamily = 'Coral6p0' and p.ER_low > 24 and p.ER_low < p.spec_er_low then 8
+                    when p.BasePass = 1 and p.ProductFamily = 'Coral6p3' and @SpecVersion='1.0_BIN8' and p.ER_low > 24 and p.ER_low < p.spec_er_low then 8
+                    when p.BasePass = 1 and p.ProductFamily = 'Coral5p3' and @SpecVersion='1.2_BIN8' and p.ER_low > 24 and p.ER_low < p.spec_er_low then 8
                     when p.BasePass = 1 and p.ER_low >= p.spec_er_low then 1
                     else 2
                 end
@@ -233,32 +236,32 @@ BEGIN
             where t.MES_Bin=1 and b.onchip_loss_mpd_high > 10.5
     end
 
-    if @ProductFamily='Coral3p1' and @SpecVersion='1.2_F2V1'
-    begin
-        update t
-           set t.MES_Bin = 7
-            from #ToCheckUnits t
-            where t.MES_Bin=1 and left(t.ChipSN,3) not in (
-            'E01',
-            'E02',
-            'E03',
-            'E04',
-            'E05',
-            'E06',
-            'G01',
-            'G02',
-            'G03',
-            'G04',
-            'G05',
-            'G06',
-            'H02',
-            'H03',
-            'H04',
-            'H05',
-            'I03',
-            'I04'
-            )
-    end
+    --if @ProductFamily='Coral3p1' and @SpecVersion='1.2_F2V1'
+    --begin
+    --    update t
+    --       set t.MES_Bin = 7
+    --        from #ToCheckUnits t
+    --        where t.MES_Bin=1 and left(t.ChipSN,3) not in (
+    --        'E01',
+    --        'E02',
+    --        'E03',
+    --        'E04',
+    --        'E05',
+    --        'E06',
+    --        'G01',
+    --        'G02',
+    --        'G03',
+    --        'G04',
+    --        'G05',
+    --        'G06',
+    --        'H02',
+    --        'H03',
+    --        'H04',
+    --        'H05',
+    --        'I03',
+    --        'I04'
+    --        )
+    --end
 
     --update z set z.Traveler_Bin=1 from #ToCheckUnits z where z.Traveler_Bin in (4,5)
 
